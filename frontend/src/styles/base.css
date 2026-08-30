@@ -119,7 +119,7 @@ button:disabled { cursor: default; }
 
 .screens-track {
   display: flex;
-  width: calc(1232px * 5);
+  width: calc(1232px * 6); /* pre-JS fallback tab count; app.js sets the real width from TABS.length */
   height: 100%;
   transition: transform var(--motion-md) var(--ease-standard);
   will-change: transform;

@@ -293,6 +293,13 @@ export function createMockProvider() {
       return { sent: true };
     },
 
+    // Mock mode has no real PC to type on or move a cursor on.
+    subscribeDesktopError() {
+      return () => {};
+    },
+    sendPointerInput() {},
+    sendKeyboardInput() {},
+
     destroy() {
       destroyed = true;
       clearInterval(statusTimer);

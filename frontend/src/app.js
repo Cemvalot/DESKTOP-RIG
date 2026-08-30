@@ -20,10 +20,11 @@ import { getSettings, getActiveProfileId, setActiveProfileId, getLastTab, setLas
 import * as HomeScreen from "./screens/home.js";
 import * as GamingScreen from "./screens/gaming.js";
 import * as MediaScreen from "./screens/media.js";
+import * as DesktopScreen from "./screens/desktop.js";
 import * as SystemScreen from "./screens/system.js";
 import * as SmartHomeScreen from "./screens/smarthome.js";
 
-const SCREEN_MODULES = { home: HomeScreen, gaming: GamingScreen, media: MediaScreen, system: SystemScreen, smarthome: SmartHomeScreen };
+const SCREEN_MODULES = { home: HomeScreen, gaming: GamingScreen, media: MediaScreen, desktop: DesktopScreen, system: SystemScreen, smarthome: SmartHomeScreen };
 const CONTENT_WIDTH = 1232;
 
 async function loadJson(relPath) {
@@ -122,6 +123,11 @@ async function main() {
 
   // ── Mount screens into the swipe track ─────────────────────────────────
   const track = document.getElementById("screens-track");
+  // base.css's .screens-track has a static width for the original 5-tab
+  // count baked in as a fallback; set it explicitly here so it always
+  // matches the real TABS length (this is what actually governs layout —
+  // the CSS value is now just a pre-JS placeholder).
+  track.style.width = `${CONTENT_WIDTH * TABS.length}px`;
   const screenHandles = {};
   TABS.forEach((tab, i) => {
     const screenEl = el("div", { class: `screen screen-${tab.id}`, "data-visible": i === 0 ? "true" : "false" });
@@ -172,7 +178,14 @@ async function main() {
   const DRAG_CAPTURE_THRESHOLD = 8; // px — standard tap-vs-swipe disambiguation distance
 
   function isInteractiveTarget(target) {
-    return !!target.closest('input[type="range"], .tile.editable, .editing, .slider');
+    // .trackpad-surface-small (Desktop screen, docs/architecture-security.md
+    // §11): a drag here must always be interpreted as a pointer-move gesture
+    // for the PC's cursor, never as a tab-swipe — without this exclusion, a
+    // drag that exceeds DRAG_CAPTURE_THRESHOLD gets captured by this
+    // viewport-level handler instead (setPointerCapture retargets away from
+    // the trackpad's own listeners), which both breaks cursor control and
+    // unexpectedly swipes to the next tab mid-drag.
+    return !!target.closest('input[type="range"], .tile.editable, .editing, .slider, .trackpad-surface-small');
   }
 
   // Fix for docs/test-report.md §3 (the click-suppression bug): the old

@@ -23,6 +23,7 @@ kiosk client. No internet exposure. No arbitrary command execution from the tabl
 8. [System stats reporting](#8-system-stats-reporting)
 9. [Auto-start on Windows](#9-auto-start-on-windows)
 10. [Threat model summary](#10-threat-model-summary)
+11. [Virtual keyboard / trackpad (addendum)](#11-virtual-keyboard--trackpad-addendum)
 
 ---
 
@@ -787,3 +788,85 @@ privilege and complexity for what's a single-user local kiosk-controller.
   can still request a dangerous action and confirm it within the window; the confirmation
   step defends against UI bugs/bypass/accidental taps and non-UI API misuse, not against a
   fully trusted-but-malicious token holder.
+
+---
+
+## 11. Virtual keyboard / trackpad (addendum)
+
+Added post-v1, once the real target turned out to be this Omarchy/Hyprland machine (per §10's
+residual-risks note and the server README's "Real vs mocked" table), making input injection via
+`ydotool` practical to build directly rather than a Windows-specific plan. This is **input
+only, by design** — an earlier draft of this feature also mirrored the screen (via `grim`), but
+that was cut: the tablet only needs to drive the keyboard and mouse, not watch the display, and
+dropping the screen mirror removes an entire category of trust-boundary exposure (screen
+contents — open documents, notifications, whatever's on screen — never had to cross the LAN)
+along with the server-side capture loop it required. Follows the same split rationale as §1.1:
+both input types are continuous/interactive, so both are WS-only — no REST addition for this
+feature.
+
+### 11.1 WS additions
+
+- `pointer_input` (client→server): `{ action: 'move'|'click'|'scroll', dx?, dy?, button? }`.
+  - `move`: relative touch-drag deltas in tablet CSS pixels; the server applies its own
+    `remoteDesktop.moveSensitivity` multiplier before calling the OS. Server-side coalesces
+    to at most one processed move per ~16ms per connection (a touch surface can emit far
+    faster than a spawned input-injection process can keep up with; intermediate positions
+    don't matter, only catching up to the latest one).
+  - `click`: `button: 'left'|'right'|'middle'`.
+  - `scroll`: `dy` (currently a documented TODO on the real backend — see server README —
+    but always resolves successfully in mockExec mode so the full gesture flow is testable).
+- `keyboard_input` (client→server): `{ action: 'type'|'key', text?, key? }`.
+  - `type`: literal text (letters/digits/punctuation/space, capped at 500 chars per message)
+    from the on-screen keyboard, sent verbatim to `ydotool type` — the server never
+    interprets it, it just types it. `ydotool type` resolves the actual keystrokes (including
+    shift) internally, so the tablet never sends a keycode for printable characters; the
+    keyboard's own Shift button is a client-side display toggle only (it decides which glyph a
+    key sends, e.g. "a" vs "A" — it is never itself transmitted as a keypress).
+  - `key`: a symbolic name (`'Enter'`, `'Backspace'`, `'Tab'`, `'Escape'`, `'Delete'`,
+    `'ArrowUp'/'ArrowDown'/'ArrowLeft'/'ArrowRight'`) looked up against a fixed server-side
+    allowlist (`SPECIAL_KEYS` in `server/src/commands/desktop.js`) mapping to raw Linux
+    keycodes — the tablet never supplies a keycode or an arbitrary key combination.
+  - Both message types are fire-and-forget, matching `status_update`'s own precedent — no
+    per-event `command_result`-style resolution (far too chatty for a drag gesture or a typed
+    sentence). A failure (e.g. the input-injection tool isn't installed) is surfaced via a WS
+    `error` push (`code: 'POINTER_INPUT_FAILED'` or `'KEYBOARD_INPUT_FAILED'`), rate-limited
+    server-side to at most one push every 4 seconds per connection *per action type* so a bad
+    drag and a burst of typing don't stomp each other's throttle window or flood toasts.
+
+### 11.2 Config
+
+`config/service.json` → `remoteDesktop`: `moveSensitivity` (default `1.5`) — the only tuning
+knob; there's no frame/capture config since there's no screen capture in this feature anymore.
+
+### 11.3 Security posture
+
+This is a genuine capability expansion over §4.1's "no arbitrary command execution" rule, and
+is called out explicitly rather than folded silently into the existing command allowlist:
+
+- **Still bounded, not arbitrary — including the keyboard.** This is the one place in the
+  codebase where the tablet supplies free-form content that gets typed verbatim (`type`'s
+  `text` field) rather than an id resolved against a config allowlist. That's an intentional,
+  narrow exception: the "no arbitrary exec" rule (§4.1) is about the tablet never causing
+  arbitrary **code execution** — typing text into whatever currently has keyboard focus on the
+  PC is the literal, entire point of a virtual keyboard, exactly as safe (or unsafe) as a
+  Bluetooth keyboard would be. It cannot run a program by itself, read file contents, or
+  escape into a shell — `execFile('ydotool', ['type', '--', text])` never invokes a shell, so
+  there is no metacharacter-injection risk regardless of content. Non-printable keys go
+  through the fixed `SPECIAL_KEYS` allowlist, same shape as every other command in this
+  codebase. Mouse control is unchanged from the original design: a relative delta and one of
+  three fixed buttons, nothing else.
+- **Widens what a stolen/leaked token can do — more than most other capabilities in this app.**
+  Per §10.2's existing "trusts any device on the LAN that obtains a valid token" trust
+  assumption: previously that device could launch allowlisted apps/links and flip audio/power
+  state; it can now also type anything and drive the mouse anywhere, which is a materially
+  larger capability if a token is ever compromised — comparable to plugging in a rogue
+  keyboard/mouse. No new confirmation step gates this (unlike §5's dangerous-command flow)
+  because, unlike a single irreversible action (shutdown), keyboard/pointer input is
+  continuous, attributable to one `token_id` per WS connection, and revocable mid-session
+  (§2.5) the same as any other live session — the same reasoning `status_update` already
+  relies on for going ungated. Revocation remains the actual mitigation, same as everywhere
+  else in this design; the household-LAN/single-trusted-owner threat model (§10.2) is what
+  makes that an acceptable tradeoff here.
+- **No new network exposure.** Reuses the existing `/ws` connection, bearer auth, and
+  LAN/origin allowlist (§3) — there is no separate port, no separate auth path, and no
+  unauthenticated route added by this feature.

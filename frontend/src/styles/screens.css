@@ -118,6 +118,61 @@
 .media-bottom > .btn-icon-compact { width: 128px; height: 128px; border-radius: var(--radius-lg); align-self: center; justify-self: center; }
 .media-source-row { grid-column: auto; margin-top: 0; }
 
+/* ── Desktop (§15.4.1) — virtual keyboard + trackpad, docs/architecture-security.md §11 */
+.screen-desktop .screen-inner {
+  grid-template-columns: 1fr 320px; grid-template-rows: 1fr; grid-template-areas: "keyboard trackpad";
+  /* Extra bottom breathing room beyond §9's standard 24px side margin: this
+     screen is dense with small, rapidly-tappable buttons, and its lowest
+     row sits right above the tab bar / the tablet's physical bottom edge —
+     exactly where Android's own "swipe up and hold" App Pinning-unpin
+     gesture (docs/tablet-setup.md §8) is detected. Pushing keys/buttons
+     further from that edge makes fast taps here less likely to be
+     misread as the start of that OS gesture. */
+  padding-bottom: var(--space-6);
+  box-sizing: border-box;
+}
+
+.keyboard-panel {
+  grid-area: keyboard;
+  --panel-tint: rgba(102, 76, 210, 0.24); --panel-border: rgba(153, 126, 255, 0.28);
+  display: flex; flex-direction: column; height: 100%; box-sizing: border-box;
+}
+.vk-rows { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: var(--space-2); }
+.vk-row { display: flex; gap: var(--space-2); }
+.vk-key {
+  flex: 1; min-width: 0; height: 62px; border-radius: var(--radius-md);
+  background: var(--bg-3); border: 1px solid var(--bg-4); color: var(--text-primary);
+  font: var(--type-label); display: flex; align-items: center; justify-content: center;
+}
+.vk-key:active { background: var(--bg-4); }
+.vk-key.vk-special { background: var(--bg-2); color: var(--text-secondary); font: var(--type-caption); }
+.vk-key.vk-special.active { background: var(--accent-dim-bg); border-color: var(--accent-border); color: var(--accent); }
+.vk-key.vk-wide { flex: 1.7; }
+.vk-key.vk-space { flex: 7; }
+
+.trackpad-panel {
+  grid-area: trackpad;
+  --panel-tint: rgba(31, 132, 190, 0.20); --panel-border: rgba(77, 198, 242, 0.26);
+  display: flex; flex-direction: column; min-height: 0; height: 100%; box-sizing: border-box;
+}
+.trackpad-surface-small {
+  position: relative; flex: 1; min-height: 120px; border-radius: var(--radius-md);
+  background-color: var(--bg-0); border: 1px solid var(--bg-4); touch-action: none; cursor: crosshair;
+  display: flex; align-items: center; justify-content: center; overflow: hidden;
+  background-image: radial-gradient(circle, var(--bg-4) 1.5px, transparent 1.5px);
+  background-size: 18px 18px;
+}
+.trackpad-surface-small:active { background-color: rgba(41, 211, 232, 0.06); }
+.trackpad-hint {
+  font: var(--type-caption); color: var(--text-secondary); background: var(--bg-overlay);
+  padding: var(--space-1) var(--space-3); border-radius: var(--radius-full);
+  transition: opacity 200ms ease; pointer-events: none; text-align: center;
+}
+.trackpad-hint.hidden { opacity: 0; }
+
+.trackpad-btn-row { display: flex; gap: var(--space-3); margin-top: var(--space-3); flex: none; }
+.trackpad-btn { flex: 1; justify-content: center; height: 56px; }
+
 /* ── System (§15.5) ───────────────────────────────────────────────────── */
 .screen-system .screen-inner {
   grid-template-columns: 1fr 380px;

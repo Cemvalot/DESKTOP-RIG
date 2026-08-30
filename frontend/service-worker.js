@@ -5,7 +5,7 @@
 // after a network blip. Never caches live data — /api/* and the WS
 // upgrade are always passed straight to the network.
 
-const CACHE_NAME = "launchpad-shell-v26";
+const CACHE_NAME = "launchpad-shell-v28";
 
 const SHELL_FILES = [
   "./",
@@ -58,6 +58,7 @@ const SHELL_FILES = [
   "./src/screens/home.js",
   "./src/screens/gaming.js",
   "./src/screens/media.js",
+  "./src/screens/desktop.js",
   "./src/screens/system.js",
   "./src/screens/smarthome.js",
 ];

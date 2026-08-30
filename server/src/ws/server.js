@@ -23,6 +23,12 @@ const { WebSocketServer } = require('ws');
 const HEARTBEAT_INTERVAL_MS = 15_000;
 const HEARTBEAT_TIMEOUT_MS = 10_000;
 const ALL_CHANNELS = ['status', 'now_playing', 'connection'];
+// Minimum spacing between processed pointer_input 'move' messages per
+// connection — a touch-drag can emit far faster than a spawned `ydotool`
+// process can keep up with; this coalesces to the latest delta rather than
+// queuing every event, which is what you want for pointer tracking (the
+// intermediate positions don't matter, only catching up to the latest one).
+const POINTER_MOVE_MIN_INTERVAL_MS = 16;
 
 function envelope(type, id, payload) {
   return JSON.stringify({ type, id: id ?? null, payload: payload ?? {}, timestamp: new Date().toISOString() });
@@ -46,13 +52,14 @@ function extractBearerFromQuery(reqUrl) {
 }
 
 class WsHub {
-  constructor({ tokenStore, isAddressAllowed, allowedSubnets, limiters, logger, serverVersion }) {
+  constructor({ tokenStore, isAddressAllowed, allowedSubnets, limiters, logger, serverVersion, desktopController }) {
     this.tokenStore = tokenStore;
     this.isAddressAllowed = isAddressAllowed;
     this.allowedSubnets = allowedSubnets;
     this.limiters = limiters;
     this.logger = logger;
     this.serverVersion = serverVersion;
+    this.desktopController = desktopController;
     this.clients = new Set(); // { ws, tokenId, sessionId, subscriptions, lastPongAt, pingTimer }
 
     this.wss = new WebSocketServer({
@@ -119,6 +126,9 @@ class WsHub {
       lastPongAt: Date.now(),
       pingTimer: null,
       awaitingPong: false,
+      lastPointerMoveAt: 0,
+      lastPointerErrorAt: 0,
+      lastKeyboardErrorAt: 0,
     };
     this.clients.add(client);
     this.logger.info('ws connected', { token_id: client.tokenId, session_id: client.sessionId, source_ip: remoteAddress });
@@ -205,8 +215,80 @@ class WsHub {
         client.subscriptions = new Set(valid.length ? valid : ALL_CHANNELS);
         break;
       }
+      case 'pointer_input':
+        this._handlePointerInput(client, msg.payload || {});
+        break;
+      case 'keyboard_input':
+        this._handleKeyboardInput(client, msg.payload || {});
+        break;
       default:
         client.ws.send(envelope('error', null, { code: 'UNKNOWN_MESSAGE_TYPE', message: `Unknown message type '${msg.type}'` }));
+    }
+  }
+
+  /**
+   * Trackpad input from the tablet — architecture-security.md §1.1's own
+   * split rationale ("continuous/high-frequency → WS, not REST") applies
+   * directly to move/scroll; click is low-frequency but kept on the same
+   * channel so ordering with in-flight moves is preserved. Never resolves
+   * per-event (that would be far too chatty for a touch-drag) — errors are
+   * surfaced at most once every few seconds via a WS `error` push so a
+   * missing `ydotool` shows one toast, not a flood.
+   */
+  _handlePointerInput(client, payload) {
+    if (!this.desktopController) return;
+    const { action } = payload;
+    const report = (err) => {
+      const now = Date.now();
+      if (now - client.lastPointerErrorAt < 4000) return;
+      client.lastPointerErrorAt = now;
+      client.ws.send(envelope('error', null, { code: 'POINTER_INPUT_FAILED', message: err.message }));
+    };
+
+    if (action === 'move') {
+      const now = Date.now();
+      if (now - client.lastPointerMoveAt < POINTER_MOVE_MIN_INTERVAL_MS) return;
+      client.lastPointerMoveAt = now;
+      const dx = Number(payload.dx) || 0;
+      const dy = Number(payload.dy) || 0;
+      if (!dx && !dy) return;
+      this.desktopController.moveCursor({ dx, dy }).catch(report);
+    } else if (action === 'click') {
+      this.desktopController.click({ button: payload.button === 'right' ? 'right' : payload.button === 'middle' ? 'middle' : 'left' }).catch(report);
+    } else if (action === 'scroll') {
+      this.desktopController.scroll({ dy: Number(payload.dy) || 0 }).catch(report);
+    } else {
+      client.ws.send(envelope('error', null, { code: 'BAD_MESSAGE', message: `Unknown pointer_input action '${action}'` }));
+    }
+  }
+
+  /**
+   * Virtual keyboard input from the tablet. Same fire-and-forget shape as
+   * pointer_input and the same reasoning for why: a run of typed characters
+   * is a continuous stream of low-consequence-per-event actions, not a
+   * discrete command needing a result per keystroke. `type` carries literal
+   * text (letters/digits/punctuation/space); `key` carries a symbolic name
+   * from the server's fixed allowlist (see desktop.js SPECIAL_KEYS) — never
+   * a raw keycode or arbitrary key combo from the client.
+   */
+  _handleKeyboardInput(client, payload) {
+    if (!this.desktopController) return;
+    const { action } = payload;
+    const report = (err) => {
+      const now = Date.now();
+      if (now - client.lastKeyboardErrorAt < 4000) return;
+      client.lastKeyboardErrorAt = now;
+      client.ws.send(envelope('error', null, { code: 'KEYBOARD_INPUT_FAILED', message: err.message }));
+    };
+
+    if (action === 'type') {
+      const text = typeof payload.text === 'string' ? payload.text.slice(0, 500) : '';
+      if (!text) return;
+      this.desktopController.typeText(text).catch(report);
+    } else if (action === 'key') {
+      this.desktopController.pressKey(String(payload.key || '')).catch(report);
+    } else {
+      client.ws.send(envelope('error', null, { code: 'BAD_MESSAGE', message: `Unknown keyboard_input action '${action}'` }));
     }
   }
 

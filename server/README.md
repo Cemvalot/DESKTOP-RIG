@@ -117,6 +117,9 @@ a realistic delayed success instead of actually invoking anything.
 | `media_control` (play/pause/next/prev/stop/toggle) + now-playing | **Real on Linux, but `playerctl` is not installed on this machine** | Wired to MPRIS via `playerctl` (the standard tool for this), with a 1.5s poll loop (`_pollNowPlaying`) that only fires `now_playing_update` on an actual track/app/play-state change, not on every position tick, per architecture-security.md §1.3. Album art is left `null` — MPRIS art URLs are local filesystem paths on the PC, not reachable from the tablet, and serving them would need a small proxy endpoint (follow-up, not implemented). **To make this real**: `sudo pacman -S playerctl`. Until then, media commands fail cleanly (`spawn playerctl ENOENT`, confirmed via a live curl test) rather than lying about success — Home/Media screens correctly show "Nothing playing" instead of fake data. |
 | System stats (`/status`, `status_update`) | **Real everywhere** | `systeminformation` runs fine on Linux and Windows; verified live (real CPU/RAM/disk/network/temp numbers, including through the actual dashboard UI). |
 | Wake-on-LAN | **Real everywhere** | Plain UDP broadcast via `dgram`, no OS-specific code — not gated by mockExec. |
+| Virtual keyboard (type + special keys) | **Real on Linux** (`ydotool` installed + `ydotool.service` enabled 2026-08-30) | `typeText`/`pressKey` in `src/commands/desktop.js`, backed by `ydotool type`/`ydotool key`. `mockExec` mode fully exercises the flow either way. |
+| Trackpad cursor move / click | **Real on Linux** (same `ydotool` setup) | See "Virtual keyboard / trackpad" below. **Verified live**: a WS `pointer_input` round-trip through the running server actually moved the real cursor (confirmed via `hyprctl cursorpos` before/after) and clicked, with no error. `moveCursor`/`click` throw a clear, honest error (not a crash, not a silent no-op) if `ydotool`/`ydotool.service` is ever missing; `mockExec` mode also fully exercises the flow. |
+| Trackpad scroll | **TODO, all platforms** | `ydotool` 1.0.4 (the version in this distro's `extra` repo) has no verified wheel/scroll subcommand — rather than ship an unverified invocation, this is a documented TODO in `src/commands/desktop.js`; mockExec always succeeds so the gesture flow itself is testable today. |
 | Home Assistant / OBS / Discord / notifications / clipboard | **Module stubs, disabled by default** | `server/src/modules/<name>/` — see each module's own `README.md` for what real integration would need. Never imported/invoked unless `config/service.json` → `modules.<name>.enabled: true`. |
 
 ### Linux-specific config
@@ -190,6 +193,45 @@ Structured JSON-lines, one event per line, written to `logDir` (see
 logs raw bearer tokens, raw pairing codes, raw confirm tokens, or request
 body fields outside the allowlisted set — see `src/logger.js` and every
 route's log calls for what's actually written.
+
+## Virtual keyboard / trackpad
+
+The dashboard's dedicated "Desktop" tab is a control-only remote input surface — a full
+on-screen keyboard (types on the PC) plus a small trackpad (drag to move the cursor, tap to
+left-click, two-finger tap to right-click). It never shows the PC's
+screen — an earlier iteration also mirrored the display via `grim`, but that was cut in favor
+of exactly this: keyboard + trackpad, nothing else, no live screenshot leaving the PC. See
+`docs/architecture-security.md` §11 for the full protocol/config addendum.
+
+Both the keyboard and the trackpad need `ydotool` — the standard uinput-based input-injection
+tool for Wayland/Hyprland (the X11-era `xdotool` doesn't work under Wayland at all). **Now
+installed and enabled on this machine** (2026-08-30) — verified live: `ydotool mousemove`/
+`ydotool click` both moved/clicked the real cursor directly, and a full round-trip through the
+running server (WS `pointer_input` → `DesktopController` → `ydotool`) moved the real cursor
+with no error. To set this up on a fresh machine:
+
+```bash
+sudo pacman -S ydotool
+systemctl --user enable --now ydotool   # NOT a system unit — `ydotoold` is packaged as the
+                                         # user unit `ydotool.service`, not `ydotoold.service`
+```
+
+The Arch package's own post-install hint says to also run `usermod -aG input $USER` (then
+re-log in) — worth doing for portability, but on this machine `/dev/uinput` already carried an
+ACL granting the `cemv` user direct rw access, so `ydotool.service` worked immediately without
+it. If `ydotool mousemove`/`click` fail with a permission error on a different machine, that's
+the thing to check (`getfacl /dev/uinput` — group `input` or your user needs rw).
+
+Once `ydotool.service` is running, keyboard/cursor/click work with no server code changes
+needed — `src/commands/desktop.js` already calls `ydotool type`, `ydotool key`, `ydotool
+mousemove`, and `ydotool click` with fixed argv (never a shell string; `type`'s text argument is
+literally what the user typed on the virtual keyboard, but `execFile` never invokes a shell, so
+there's no metacharacter-injection risk regardless of content). Scroll stays a TODO (see the
+table above) until `ydotool`'s wheel/scroll support is verified — 1.0.4 (the version installed
+here) has no confirmed subcommand for it.
+
+The only tuning knob is `config/service.json` → `remoteDesktop.moveSensitivity` (default
+`1.5`) — see `docs/architecture-security.md` §11.2.
 
 ## Double-clap workspace launcher (Linux)
 

@@ -112,6 +112,11 @@ function loadAll() {
   };
   service.modules = deepMerge(defaultModules, service.modules || {});
 
+  // Virtual keyboard / trackpad (docs/architecture-security.md §11) — real
+  // on Linux via `ydotool`; degrades to a clean "ydotool not installed"
+  // error if it's ever missing, never a crash.
+  service.remoteDesktop = deepMerge({ moveSensitivity: 1.5 }, service.remoteDesktop || {});
+
   // This machine's local gesture automation. Audio is analyzed in memory
   // only; it is never recorded to disk or sent over the network.
   service.clapTrigger = deepMerge(

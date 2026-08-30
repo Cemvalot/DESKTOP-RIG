@@ -124,6 +124,7 @@ export function createLiveProvider() {
   const nowPlayingChan = new Channel();
   const connectionChan = new Channel();
   const commandResultChan = new Channel();
+  const desktopErrorChan = new Channel();
 
   let ws = null;
   let wsExplicitlyClosed = false;
@@ -229,7 +230,11 @@ export function createLiveProvider() {
         send({ type: "pong", id: null, payload: {}, timestamp: new Date().toISOString() });
         break;
       case "error":
-        console.warn("[liveProvider] server error message", msg.payload);
+        if (msg.payload?.code === "POINTER_INPUT_FAILED" || msg.payload?.code === "KEYBOARD_INPUT_FAILED") {
+          desktopErrorChan.emit(msg.payload);
+        } else {
+          console.warn("[liveProvider] server error message", msg.payload);
+        }
         break;
       default:
         break;
@@ -366,6 +371,16 @@ export function createLiveProvider() {
       return apiFetch("/wol", { method: "POST", body: {} });
     },
 
+    subscribeDesktopError(cb) {
+      return desktopErrorChan.subscribe(cb);
+    },
+    sendPointerInput(payload) {
+      send({ type: "pointer_input", id: null, payload, timestamp: new Date().toISOString() });
+    },
+    sendKeyboardInput(payload) {
+      send({ type: "keyboard_input", id: null, payload, timestamp: new Date().toISOString() });
+    },
+
     destroy() {
       destroyed = true;
       wsExplicitlyClosed = true;
@@ -376,6 +391,7 @@ export function createLiveProvider() {
       nowPlayingChan.clear();
       connectionChan.clear();
       commandResultChan.clear();
+      desktopErrorChan.clear();
     },
   };
 }

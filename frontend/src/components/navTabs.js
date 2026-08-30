@@ -1,4 +1,4 @@
-// frontend/src/components/navTabs.js — persistent bottom tab bar (5 fixed tabs).
+// frontend/src/components/navTabs.js — persistent bottom tab bar (6 fixed tabs).
 
 import { el } from "./dom.js";
 import { iconMarkup } from "./icons.js";
@@ -8,6 +8,7 @@ export const TABS = [
   { id: "home", label: "Home", icon: "home" },
   { id: "gaming", label: "Gaming", icon: "controller" },
   { id: "media", label: "Media", icon: "video" },
+  { id: "desktop", label: "Desktop", icon: "monitor" },
   { id: "system", label: "System", icon: "cpu" },
   { id: "smarthome", label: "Smart Home", icon: "lightbulb" },
 ];

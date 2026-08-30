@@ -24,6 +24,7 @@ const { getLanInterfaces, computeAllowedSubnets, isAddressAllowed, buildNetworkG
 const { buildAuthMiddleware } = require('./auth');
 const { Executor } = require('./commands/exec');
 const { MediaController, LinuxMediaController } = require('./commands/media');
+const { DesktopController } = require('./commands/desktop');
 const { SystemStatsService } = require('./stats/systemStats');
 const { WsHub } = require('./ws/server');
 const { loadModules } = require('./modules');
@@ -105,6 +106,12 @@ function main() {
     logger,
     slowRefreshMs: config.service.statsSlowRefreshMs ?? 2500,
   });
+  const remoteDesktopConfig = config.service.remoteDesktop || {};
+  const desktopController = new DesktopController({
+    mockExec: config.mockExec,
+    logger,
+    moveSensitivity: remoteDesktopConfig.moveSensitivity ?? 1.5,
+  });
 
   // --- Optional modules (disabled by default, never invoked when off) ---
   const modules = loadModules({ config, logger });
@@ -124,6 +131,7 @@ function main() {
     limiters,
     logger,
     serverVersion: pkg.version,
+    desktopController,
   });
   mediaController.onNowPlayingChange((nowPlaying) => {
     wsHub.pushNowPlayingUpdate(nowPlaying);

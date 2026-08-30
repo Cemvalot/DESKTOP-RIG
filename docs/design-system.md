@@ -274,13 +274,17 @@ y: 0
 
 ## 10. Navigation Pattern
 
-**Bottom tab bar**, 5 fixed tabs, icon-over-label, always visible except
+**Bottom tab bar**, 6 fixed tabs, icon-over-label, always visible except
 during the confirmation dialog, connection-lost overlay, and idle
 screensaver (which suspend/replace all chrome).
 
-Order (left → right): **Home · Gaming · Media · System · Smart Home**.
+Order (left → right): **Home · Gaming · Media · Desktop · System · Smart Home**.
+Desktop (§15.4.1 addendum) was added post-v1 as its own tab rather than a
+panel embedded in Media — a panel squeezed into Media's already-tight
+bottom-row layout wasn't reliably visible, and a full keyboard plus a
+trackpad both benefit from real screen real estate, not leftover space.
 
-- Tab hit area: 1280px ÷ 5 = 256px wide × 96px tall each (well above min).
+- Tab hit area: 1280px ÷ 6 ≈ 213px wide × 96px tall each (well above min).
 - Active tab: icon switches to filled variant, `--accent` icon + label color,
   a 3px accent underline pill (`--radius-full`) centered under the tab,
   `--accent-dim-bg` wash behind the tab cell.
@@ -499,6 +503,44 @@ one "ambient" indicator this screen allows, and only while actually engaged.
 Transport row is centered in the content area's middle band (primary
 thumb-reach zone, §14). Play/pause is the largest control on the screen
 (96px) and dead-center.
+
+### 15.4.1 Desktop (addendum)
+
+```
+┌ status strip ──────────────────────────────────────────────────────────────┐
+│ ┌ VIRTUAL KEYBOARD ──────────────────────────────┐  ┌ TRACKPAD ─────────┐ │
+│ │ [1][2][3][4][5][6][7][8][9][0]      [  ⌫  ]     │  │                    │ │
+│ │ [ Tab ][q][w][e][r][t][y][u][i][o][p]           │  │  drag to move ·    │ │
+│ │ [a][s][d][f][g][h][j][k][l]      [  Enter  ]    │  │   tap to click     │ │
+│ │ [ Shift ][z][x][c][v][b][n][m][,][.]            │  │                    │ │
+│ │ [Esc][      Space      ][←][↑][↓][→]            │  │                    │ │
+│ └──────────────────────────────────────────────────┘  │ [Left]  [Right]   │ │
+│                                                          └────────────────┘ │
+├ tab bar ───────────────────────────────────────────────────────────────────┤
+```
+
+A dedicated tab (see §10), not a panel embedded in Media. Two panels side by
+side: a full-width **Virtual Keyboard** (the primary control — a standard
+QWERTY layout plus digits/punctuation, Tab/Enter/Backspace/Escape, arrow
+keys, and a Shift toggle that swaps every letter/digit/punctuation key's
+glyph and sent character between its lower/upper or unshifted/shifted form,
+e.g. `1`↔`!`, `,`↔`<`) and a fixed-width, deliberately small **Trackpad**
+column next to it (touch surface + explicit Left/Right click buttons below
+it). This tab is control-only — it never shows the PC's screen; an earlier
+draft of this feature mirrored the display too, but that was cut in favor
+of exactly this: keyboard + trackpad, nothing else. See
+`docs/architecture-security.md` §11 for the protocol.
+
+Gestures on the trackpad: one-finger drag moves the real cursor, one-finger
+tap left-clicks, two-finger tap right-clicks. (Two-finger drag would map to
+scroll, but the server's scroll action is a documented TODO — see
+`docs/architecture-security.md` §11.1 — so the gesture deliberately does
+nothing rather than surface a "not implemented" error on an ordinary
+two-finger drag; it'll wire up once `ydotool`'s wheel support is verified.)
+The Left/Right click buttons are an explicit, discoverable fallback for anyone
+who doesn't find the gesture affordances — this app is otherwise entirely
+large-button/tap driven (§14), so gestures here are a bonus shortcut, never
+the only path to a click.
 
 ### 15.5 System
 

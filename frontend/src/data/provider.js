@@ -86,6 +86,28 @@
 // async wol(): Promise<{ sent: true }>
 //   POST /api/v1/wol equivalent (Wake-on-LAN magic packet).
 //
+// ── Virtual keyboard / trackpad (architecture-security.md §11) ────────────
+//
+// subscribeDesktopError(cb): unsubscribe()
+//   cb({ code, message }) when a pointer_input/keyboard_input action fails
+//   server-side (e.g. ydotool not installed) — rate-limited server-side to
+//   at most one push every few seconds per action type so a bad drag or a
+//   burst of typing doesn't flood toasts.
+//
+// sendPointerInput({ action: 'move'|'click'|'scroll', dx?, dy?, button? }): void
+//   Fire-and-forget (WS send, no response correlation — see
+//   architecture-security.md §1.1's continuous/high-frequency-over-WS
+//   rationale, same reasoning as status_update). 'move' takes relative
+//   dx/dy touch deltas; 'click' takes button: 'left'|'right'|'middle';
+//   'scroll' takes dy. Never sends anything if the WS isn't connected.
+//
+// sendKeyboardInput({ action: 'type'|'key', text?, key? }): void
+//   Fire-and-forget, same shape as sendPointerInput. 'type' sends literal
+//   text (letters/digits/punctuation/space) the server types via the OS
+//   input layer; 'key' sends a symbolic non-printable key name (e.g.
+//   'Enter', 'Backspace', 'ArrowLeft') from the server's fixed allowlist —
+//   never a raw keycode.
+//
 // async getPcName(): Promise<string>
 //
 // destroy(): void

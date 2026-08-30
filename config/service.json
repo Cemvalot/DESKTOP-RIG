@@ -24,6 +24,9 @@
     "macAddress": "00:00:00:00:00:00",
     "broadcastAddress": "255.255.255.255"
   },
+  "remoteDesktop": {
+    "moveSensitivity": 1.5
+  },
   "modules": {
     "homeassistant": { "enabled": false },
     "obs": { "enabled": false },
