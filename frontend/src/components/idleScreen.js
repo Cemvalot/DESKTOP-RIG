@@ -2,11 +2,11 @@
 // Idle/screensaver screen (design-system.md §13, §15.9): full --bg-0 canvas,
 // large clock, date, PC name, position drift every 2 min (instant jump, no
 // tween) as cheap LCD image-retention insurance, connection dot bottom-right.
-// Default 3-minute idle timeout; any tap instantly returns to the last tab.
+// Default 15-minute idle timeout; any tap instantly returns to the last tab.
 
 import { el, getLayer, fmtClock, fmtDate } from "./dom.js";
 
-const IDLE_TIMEOUT_MS = 3 * 60 * 1000;
+const IDLE_TIMEOUT_MS = 15 * 60 * 1000;
 const DRIFT_INTERVAL_MS = 2 * 60 * 1000;
 
 export function createIdleScreen({ pcName = "PC", onDismiss }) {

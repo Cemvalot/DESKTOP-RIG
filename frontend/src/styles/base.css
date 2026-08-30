@@ -104,6 +104,8 @@ button:disabled { cursor: default; }
   padding: 0 var(--space-4);
   font: var(--type-caption);
   color: var(--text-secondary);
+  z-index: 100;
+  pointer-events: auto;
 }
 
 .screens-viewport {

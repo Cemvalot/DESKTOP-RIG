@@ -7,6 +7,8 @@
  */
 
 const http = require('http');
+const https = require('https');
+const fs = require('fs');
 const path = require('path');
 const express = require('express');
 const pkg = require('../package.json');
@@ -25,6 +27,7 @@ const { MediaController, LinuxMediaController } = require('./commands/media');
 const { SystemStatsService } = require('./stats/systemStats');
 const { WsHub } = require('./ws/server');
 const { loadModules } = require('./modules');
+const { ClapTrigger } = require('./modules/clapTrigger');
 
 const { buildHealthRouter } = require('./routes/health');
 const { buildPairingRouter } = require('./routes/pairing');
@@ -72,6 +75,8 @@ function main() {
   const primaryLanAddress = lanInterfaces[0]?.address || null;
 
   const port = config.service.port || 8787;
+  const useHttps = config.service.https === true && config.service.tlsKeyPath && config.service.tlsCertPath;
+  const scheme = useHttps ? 'https' : 'http';
   const expectedOrigins = [
     `http://${primaryLanAddress}:${port}`,
     `https://${primaryLanAddress}:${port}`,
@@ -103,6 +108,11 @@ function main() {
 
   // --- Optional modules (disabled by default, never invoked when off) ---
   const modules = loadModules({ config, logger });
+  let clapTrigger = null;
+  if (config.service.clapTrigger.enabled && process.platform === 'linux' && !config.mockExec) {
+    clapTrigger = new ClapTrigger({ executor, logger, options: config.service.clapTrigger });
+    clapTrigger.start();
+  }
 
   // --- WS hub (created before routes since /commands/execute needs it to
   // push command_result; http servers are attached to it further below,
@@ -166,6 +176,7 @@ function main() {
       logger,
       pcLanAddress: primaryLanAddress,
       port,
+      scheme,
       onClaimed: () => ensurePairingCode(),
     })
   );
@@ -173,7 +184,7 @@ function main() {
   app.get('/pairing/current', (req, res) => {
     const info = pairingStore.currentInfo();
     if (!info) return res.status(404).json({ error: { code: 'NO_ACTIVE_CODE', message: 'No active pairing code.' } });
-    res.status(200).json({ code: info.code, expires_at: info.expires_at, pairing_url: `http://${primaryLanAddress || '<pc-ip>'}:${port}/pair?code=${info.code}` });
+    res.status(200).json({ code: info.code, expires_at: info.expires_at, pairing_url: `${scheme}://${primaryLanAddress || '<pc-ip>'}:${port}/pair?code=${info.code}` });
   });
 
   // Authenticated routes. General rate limit (§6.1) applies to all of
@@ -207,10 +218,12 @@ function main() {
   // --- HTTP servers (one per bound LAN interface, per §3.1); wsHub already
   // built above, just attach its /ws upgrade handler to each server. ---
   const httpServers = bindAddresses.map((address) => {
-    const server = http.createServer(app);
+    const server = useHttps
+      ? https.createServer({ key: fs.readFileSync(config.service.tlsKeyPath), cert: fs.readFileSync(config.service.tlsCertPath) }, app)
+      : http.createServer(app);
     wsHub.attach(server);
     server.listen(port, address, () => {
-      logger.info(`listening on http://${address}:${port}`);
+      logger.info(`listening on ${scheme}://${address}:${port}`);
     });
     return server;
   });
@@ -241,7 +254,7 @@ function main() {
   function ensurePairingCode() {
     if (!pairingStore.currentInfo()) {
       const info = pairingStore.generate();
-      const url = `http://${primaryLanAddress || '<pc-ip>'}:${port}/pair?code=${info.code}`;
+      const url = `${scheme}://${primaryLanAddress || '<pc-ip>'}:${port}/pair?code=${info.code}`;
       logger.info('pairing code generated', { code_ending_in: info.code.slice(-2), expires_at: info.expires_at });
       // eslint-disable-next-line no-console
       console.log('\n==============================================');
@@ -254,7 +267,7 @@ function main() {
   ensurePairingCode();
   setInterval(ensurePairingCode, 30_000).unref();
 
-  return { app, httpServers, wsHub, logger, config, tokenStore, pairingStore, confirmStore, commandHistory, executor, mediaController, statsService, limiters };
+  return { app, httpServers, wsHub, logger, config, tokenStore, pairingStore, confirmStore, commandHistory, executor, mediaController, statsService, limiters, clapTrigger };
 }
 
 if (require.main === module) {

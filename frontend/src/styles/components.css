@@ -205,12 +205,12 @@
 .tab-item {
   width: 256px; height: 96px;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: var(--space-1);
+  gap: var(--space-2);
   color: var(--text-secondary);
   position: relative;
 }
-.tab-item .icon { width: 26px; height: 26px; }
-.tab-item .tab-label { font: var(--type-label); }
+.tab-item .icon { width: 34px; height: 34px; }
+.tab-item .tab-label { font: 600 16px/1.2 var(--font-sans); }
 .tab-item { transition: color var(--motion-sm), background var(--motion-sm); }
 .tab-item.active { color: #7de7ff; background: linear-gradient(180deg, rgba(72, 118, 255, 0.22), rgba(84, 56, 176, 0.16)); }
 .tab-item[data-tab="gaming"].active { color: #b994ff; background: linear-gradient(180deg, rgba(139, 92, 246, 0.25), rgba(84, 56, 176, 0.14)); }
@@ -221,7 +221,7 @@
   content: "";
   position: absolute;
   bottom: 8px; left: 50%;
-  width: 32px; height: 3px;
+  width: 40px; height: 4px;
   border-radius: var(--radius-full);
   background: currentColor;
   transform: translateX(-50%);
@@ -237,6 +237,13 @@
 .status-strip button.gear-btn { display: flex; align-items: center; color: var(--text-secondary); }
 .status-strip button.gear-btn .icon { width: 18px; height: 18px; }
 .status-strip button.conn-badge { display: flex; align-items: center; gap: var(--space-2); color: inherit; }
+
+/* ── Home power-row voice-trigger button (matches Lock/Restart/Shutdown) ──*/
+.power-row .btn-action.voice-btn.active {
+  background: var(--accent-dim-bg);
+  border-color: var(--accent-border);
+  color: var(--accent);
+}
 
 /* ── Confirmation dialog (design-system.md §15.7) ────────────────────────*/
 .overlay-backdrop {

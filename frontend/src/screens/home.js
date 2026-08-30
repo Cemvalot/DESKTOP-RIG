@@ -11,7 +11,7 @@ import { COMMAND_TYPES } from "../data/index.js";
 import { fmtDuration } from "../components/dom.js";
 
 export function mount(container, ctx) {
-  const { provider, profile } = ctx;
+  const { provider, profile, onVoiceToggle } = ctx;
 
   const launchPanel = el("div", { class: "panel panel-launch panel-pad panel-launch-wrap" }, [
     el("h3", { class: "panel-title" }, "Launch"),
@@ -51,15 +51,23 @@ export function mount(container, ctx) {
 
   // Power cluster — isolated, dangerous, confirmation-gated.
   const lockBtn = el("button", { class: "btn-action press-scale", html: `${iconMarkup("lock")}<span class="tile-label">Lock</span>` });
+  const voiceBtn = el("button", { class: "btn-action press-scale voice-btn", "aria-label": "Voice trigger", title: "Say launch", html: `${iconMarkup("mic")}<span class="tile-label">Voice</span>` });
   const restartBtn = el("button", { class: "btn-action press-scale", html: `${iconMarkup("restart")}<span class="tile-label">Restart</span>` });
   const shutdownBtn = el("button", { class: "btn-action press-scale", html: `${iconMarkup("shutdown")}<span class="tile-label">Shutdown</span>` });
   lockBtn.addEventListener("click", () => runPower("lock", lockBtn));
+  voiceBtn.addEventListener("click", () => onVoiceToggle && onVoiceToggle());
   restartBtn.addEventListener("click", () => runPower("restart", restartBtn));
   shutdownBtn.addEventListener("click", () => runPower("shutdown", shutdownBtn));
   const powerPanel = el("div", { class: "panel panel-power panel-pad power-cluster" }, [
     el("h3", { class: "panel-title" }, "Power"),
-    el("div", { class: "power-row" }, [lockBtn, restartBtn, shutdownBtn]),
+    el("div", { class: "power-row" }, [voiceBtn, lockBtn, restartBtn, shutdownBtn]),
   ]);
+
+  function setVoiceListening(listening) {
+    voiceBtn.classList.toggle("active", listening);
+    voiceBtn.setAttribute("aria-label", listening ? "Stop voice trigger" : "Voice trigger");
+    voiceBtn.title = listening ? "Listening for launch" : "Say launch";
+  }
 
   container.appendChild(el("div", { class: "screen-inner" }, [launchPanel, nowPlayingPanel, statusPanel, powerPanel]));
 
@@ -161,6 +169,7 @@ export function mount(container, ctx) {
   return {
     updateStatus,
     updateNowPlaying,
+    setVoiceListening,
     destroy() {},
     refreshLayout: renderLaunchGrid,
   };

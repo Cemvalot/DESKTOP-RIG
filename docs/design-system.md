@@ -347,7 +347,7 @@ feedback keeps only the background-color change, drops the scale.
 
 ## 13. Idle / Screensaver Treatment
 
-After a configurable idle timeout (**default 3 minutes** of no touch), the
+After a configurable idle timeout (**default 15 minutes** of no touch), the
 app crossfades (500ms — the one intentional exception to the 200ms rule,
 since this is a rare, low-frequency, non-interactive transition) to a
 dedicated idle screen:

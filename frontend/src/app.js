@@ -126,7 +126,7 @@ async function main() {
   TABS.forEach((tab, i) => {
     const screenEl = el("div", { class: `screen screen-${tab.id}`, "data-visible": i === 0 ? "true" : "false" });
     track.appendChild(screenEl);
-    screenHandles[tab.id] = SCREEN_MODULES[tab.id].mount(screenEl, { provider, profile: currentProfile() });
+    screenHandles[tab.id] = SCREEN_MODULES[tab.id].mount(screenEl, { provider, profile: currentProfile(), onVoiceToggle: () => toggleVoiceTrigger() });
   });
 
   // ── Tab bar + swipe navigation ──────────────────────────────────────────
@@ -240,6 +240,69 @@ async function main() {
   });
   document.getElementById("app").insertBefore(strip.el, document.getElementById("app").firstChild);
   strip.setPcName(pcName);
+
+  // Tablet microphone trigger via the browser's Web Speech API. Note this is
+  // cloud STT (Chromium proxies audio to Google's speech service), not
+  // on-device — it needs the tablet to have real internet access, not just
+  // LAN reachability to this server. Only the resulting "launch" command is
+  // sent to the provider.
+  let recognition = null;
+  let voiceWanted = false;
+  let voiceBusy = false;
+  let voiceErrorStreak = 0;
+  function startRecognition() {
+    const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new Speech();
+    recognition.continuous = true;
+    recognition.interimResults = false;
+    recognition.lang = "en-US";
+    recognition.onresult = async (event) => {
+      for (let i = event.resultIndex; i < event.results.length; i += 1) {
+        const transcript = event.results[i][0].transcript;
+        // Google's STT reliably mishears "launch" as "lunch" on this mic/voice — accept both.
+        if (!event.results[i].isFinal || !/\b(launch|lunch)\b/i.test(transcript)) continue;
+        voiceWanted = false;
+        recognition.stop();
+        await Promise.all(["spotify", "terminal", "codex-cli"].map((app_id) =>
+          provider.executeCommand({ type: "launch_app", app_id }).catch(() => null)
+        ));
+        break;
+      }
+    };
+    recognition.onstart = () => { voiceBusy = true; voiceErrorStreak = 0; screenHandles.home?.setVoiceListening?.(true); };
+    recognition.onend = () => {
+      // Android's recognizer ends after every utterance/silence timeout even with
+      // continuous=true (unlike desktop Chrome) — restart automatically so listening
+      // actually stays on until the user taps the button off.
+      voiceBusy = false;
+      if (voiceWanted && voiceErrorStreak < 5) {
+        setTimeout(() => { if (voiceWanted) startRecognition(); }, 300);
+      } else {
+        voiceWanted = false;
+        screenHandles.home?.setVoiceListening?.(false);
+      }
+    };
+    recognition.onerror = (event) => {
+      if (event.error === "no-speech") return; // expected on silence, not a real failure
+      console.error("[voice] recognition error:", event.error);
+      voiceErrorStreak += 1;
+      if (event.error === "not-allowed" || event.error === "service-not-allowed") {
+        voiceWanted = false;
+        window.alert("Microphone access is blocked. Grant mic permission to the browser and try again.");
+      } else if (event.error === "network" && voiceErrorStreak === 1) {
+        window.alert("Voice recognition needs internet access (it's not on-device) — the tablet couldn't reach the speech service.");
+      }
+    };
+    recognition.start();
+  }
+  function toggleVoiceTrigger() {
+    const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!Speech) { window.alert("Voice trigger is not supported by this browser. Try Chrome on the tablet."); return; }
+    if (voiceWanted) { voiceWanted = false; recognition?.stop(); return; }
+    voiceWanted = true;
+    voiceErrorStreak = 0;
+    startRecognition();
+  }
 
   // History drawer toggle button, appended next to the gear icon.
   const historyDrawer = createHistoryDrawer({ provider });

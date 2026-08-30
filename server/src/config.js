@@ -112,6 +112,28 @@ function loadAll() {
   };
   service.modules = deepMerge(defaultModules, service.modules || {});
 
+  // This machine's local gesture automation. Audio is analyzed in memory
+  // only; it is never recorded to disk or sent over the network.
+  service.clapTrigger = deepMerge(
+    { enabled: process.platform === 'linux', minGapMs: 180, maxGapMs: 850, cooldownMs: 5000 },
+    service.clapTrigger || {}
+  );
+
+  // TLS (architecture-security.md §3.4): optional, self-signed. Browsers
+  // treat a secure context as required for mic access (the tablet's voice
+  // trigger uses SpeechRecognition), so any origin other than localhost
+  // needs HTTPS for that to work over the LAN. Auto-enable when this
+  // machine's git-ignored cert/key pair is present in server/certs/, so a
+  // fresh checkout stays plain HTTP until certs are generated; explicit
+  // `https`/`tlsKeyPath`/`tlsCertPath` in config/service.local.json still
+  // win over this default.
+  const defaultCertPath = path.join(SERVER_DIR, 'certs', 'launchpad-cert.pem');
+  const defaultKeyPath = path.join(SERVER_DIR, 'certs', 'launchpad-key.pem');
+  const hasDefaultCerts = fs.existsSync(defaultCertPath) && fs.existsSync(defaultKeyPath);
+  if (service.tlsCertPath === undefined && hasDefaultCerts) service.tlsCertPath = defaultCertPath;
+  if (service.tlsKeyPath === undefined && hasDefaultCerts) service.tlsKeyPath = defaultKeyPath;
+  if (service.https === undefined) service.https = hasDefaultCerts;
+
   // mockExec: explicit flag, OR a platform with no real implementation at
   // all. Both win32 and linux now have real command implementations (see
   // commands/exec.js, commands/media.js), so mockExec is no longer forced

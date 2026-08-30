@@ -9,3 +9,4 @@ dist/
 /server/state/
 /state/
 config/*.local.json
+/server/certs/

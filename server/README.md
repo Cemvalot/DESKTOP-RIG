@@ -191,6 +191,44 @@ logs raw bearer tokens, raw pairing codes, raw confirm tokens, or request
 body fields outside the allowlisted set — see `src/logger.js` and every
 route's log calls for what's actually written.
 
+## Double-clap workspace launcher (Linux)
+
+When the server runs on this Omarchy machine, it listens to the default
+microphone through `parec`. Two sharp claps 180–850 ms apart launch Spotify,
+Visual Studio Code, and a Foot terminal running Codex CLI. A five-second
+cooldown prevents duplicate launches. Audio is analyzed as raw PCM in memory
+and is never stored or transmitted.
+
+Override detector timing, sensitivity, or disable it with
+`service.clapTrigger` in `config/service.local.json`, for example:
+
+```json
+{
+  "clapTrigger": { "enabled": false, "minPeak": 9000, "maxGapMs": 1000 }
+}
+```
+
+## HTTPS / tablet voice trigger
+
+The tablet PWA can launch apps by voice (browser `SpeechRecognition`), which
+Chrome only permits on a secure context — so hitting the server by LAN IP
+needs HTTPS, not just `localhost`. Generate a self-signed cert/key pair into
+`server/certs/` (git-ignored) and the server picks it up automatically on
+next start, no config changes needed:
+
+```sh
+mkdir -p server/certs
+openssl req -x509 -newkey rsa:2048 -nodes -days 825 \
+  -keyout server/certs/launchpad-key.pem \
+  -out server/certs/launchpad-cert.pem \
+  -subj "/CN=launchpad.local"
+```
+
+The tablet's browser will need to accept the self-signed cert once. To
+override the paths, or force HTTPS off despite certs being present, set
+`https` / `tlsKeyPath` / `tlsCertPath` under `service` in
+`config/service.local.json`.
+
 ## Verified locally (Linux dev box, mockExec auto-engaged)
 
 Run `npm install && npm start` from `server/`, then (from another

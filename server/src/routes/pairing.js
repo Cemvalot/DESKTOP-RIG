@@ -13,7 +13,7 @@
 const express = require('express');
 const { rateLimitMiddleware } = require('../rateLimit');
 
-function buildPairingRouter({ pairingStore, tokenStore, limiters, logger, pcLanAddress, port, onClaimed }) {
+function buildPairingRouter({ pairingStore, tokenStore, limiters, logger, pcLanAddress, port, scheme, onClaimed }) {
   const router = express.Router();
 
   // POST /api/v1/pairing/claim — pairing code, not bearer.
@@ -53,7 +53,7 @@ function buildPairingRouter({ pairingStore, tokenStore, limiters, logger, pcLanA
     if (!info) {
       return res.status(404).json({ error: { code: 'NO_ACTIVE_CODE', message: 'No active pairing code. Generate one from the PC.' } });
     }
-    const pairingUrl = `http://${pcLanAddress || '<pc-ip>'}:${port}/pair?code=${info.code}`;
+    const pairingUrl = `${scheme || 'http'}://${pcLanAddress || '<pc-ip>'}:${port}/pair?code=${info.code}`;
     res.status(200).json({ code: info.code, expires_at: info.expires_at, pairing_url: pairingUrl });
   });
 
