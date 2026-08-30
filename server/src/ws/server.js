@@ -10,8 +10,10 @@
  *   logger usage in index.js's request logging, which never logs raw query
  *   strings for /ws).
  * - Message envelope: { type, id, payload, timestamp } both directions.
- * - Heartbeat: server sends {"type":"ping"} every 15s; client must reply
- *   {"type":"pong"} within 10s or the connection is closed (stale cleanup).
+ * - Heartbeat: server sends both a WebSocket protocol ping and the documented
+ *   JSON ping every 15s. Either pong keeps the connection alive. Browsers
+ *   answer protocol pings without waiting for page JavaScript, which avoids
+ *   false timeouts when a tablet throttles a backgrounded page.
  * - Close codes: 4401 invalid/revoked token, 4403 source IP fails LAN check.
  */
 
@@ -124,8 +126,10 @@ class WsHub {
     ws.send(envelope('hello', null, { server_version: this.serverVersion, session_id: client.sessionId }));
 
     ws.on('message', (data) => this._handleMessage(client, data));
+    ws.on('pong', () => this._markAlive(client));
     ws.on('close', () => {
       clearInterval(client.pingTimer);
+      clearTimeout(client.pongDeadline);
       this.clients.delete(client);
       this.logger.info('ws disconnected', { token_id: client.tokenId, session_id: client.sessionId });
     });
@@ -152,14 +156,30 @@ class WsHub {
       return;
     }
 
+    if (client.ws.readyState !== 1) return;
+
     client.awaitingPong = true;
-    client.ws.send(envelope('ping', null, {}));
     client.pongDeadline = setTimeout(() => {
       if (client.awaitingPong) {
-        this.logger.info('ws closing: pong not received in time', { token_id: client.tokenId });
+        this.logger.info('ws closing: pong not received in time', {
+          token_id: client.tokenId,
+          session_id: client.sessionId,
+        });
         client.ws.terminate();
       }
     }, HEARTBEAT_TIMEOUT_MS);
+    // Browser WebSocket implementations automatically answer protocol ping
+    // frames even when timers/message handlers in the page are throttled.
+    client.ws.ping();
+    // Keep the application heartbeat for protocol compatibility and for
+    // non-browser clients which already implement the documented envelope.
+    client.ws.send(envelope('ping', null, {}));
+  }
+
+  _markAlive(client) {
+    client.awaitingPong = false;
+    client.lastPongAt = Date.now();
+    clearTimeout(client.pongDeadline);
   }
 
   _handleMessage(client, data) {
@@ -177,9 +197,7 @@ class WsHub {
 
     switch (msg.type) {
       case 'pong':
-        client.awaitingPong = false;
-        client.lastPongAt = Date.now();
-        clearTimeout(client.pongDeadline);
+        this._markAlive(client);
         break;
       case 'subscribe': {
         const channels = Array.isArray(msg.payload?.channels) ? msg.payload.channels : ALL_CHANNELS;

@@ -5,7 +5,7 @@
 // after a network blip. Never caches live data — /api/* and the WS
 // upgrade are always passed straight to the network.
 
-const CACHE_NAME = "launchpad-shell-v15";
+const CACHE_NAME = "launchpad-shell-v17";
 
 const SHELL_FILES = [
   "./",

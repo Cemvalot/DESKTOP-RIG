@@ -59,8 +59,10 @@
   width: 120px;
   height: 120px;
   border-radius: var(--radius-xl);
-  background: var(--bg-2);
-  border: 1px solid var(--border-default);
+  background: linear-gradient(145deg, rgba(255,255,255,.13), rgba(255,255,255,.035));
+  border: 1px solid rgba(255,255,255,.2);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.2), 0 10px 24px rgba(0,0,0,.18);
+  backdrop-filter: blur(22px) saturate(145%);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -68,6 +70,13 @@
   gap: var(--space-2);
   color: var(--text-primary);
 }
+.tile[data-id="steam"] { --tile-accent: #66c0f4; background: linear-gradient(145deg, rgba(31,126,199,.28), rgba(18,62,105,.12)); border-color: rgba(102,192,244,.58); box-shadow: inset 0 1px 0 rgba(255,255,255,.2), 0 10px 28px rgba(20,104,170,.28); }
+.tile[data-id="spotify"] { --tile-accent: #1ed760; background: linear-gradient(145deg, rgba(25,180,95,.25), rgba(18,85,55,.1)); border-color: rgba(30,215,96,.46); }
+.tile[data-id="discord"] { --tile-accent: #aab8f5; background: linear-gradient(145deg, rgba(92,108,210,.25), rgba(39,45,105,.1)); border-color: rgba(142,161,225,.45); }
+.tile[data-id="browser"] { background: linear-gradient(145deg, rgba(55,160,220,.22), rgba(24,76,110,.1)); border-color: rgba(89,190,235,.4); }
+.tile[data-id="files"] { background: linear-gradient(145deg, rgba(220,170,55,.2), rgba(90,65,20,.1)); border-color: rgba(242,193,75,.42); }
+.tile[data-id="codex-cli"], .tile[data-id="claude-cli"], .tile[data-id="chatgpt"] { background: linear-gradient(145deg, rgba(136,105,235,.24), rgba(64,45,135,.1)); border-color: rgba(174,157,255,.42); }
+.tile[data-id="steam"] .icon, .tile[data-id="spotify"] .icon, .tile[data-id="discord"] .icon { color: var(--tile-accent); }
 .tile:active:not(:disabled) { background: var(--bg-4); }
 .tile .icon { width: 32px; height: 32px; }
 .tile-label { font: var(--type-label); text-align: center; padding: 0 var(--space-2); }

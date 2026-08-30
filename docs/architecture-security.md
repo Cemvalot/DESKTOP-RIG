@@ -97,8 +97,9 @@ Notes:
   string (see §6).
 - One WS connection per tablet session. Server closes with code `4401` if the token is
   invalid/revoked, and `4403` if the peer's source IP fails the LAN-subnet check (§3).
-- Heartbeat: server sends `{"type":"ping",...}` every 15s; client must reply
-  `{"type":"pong",...}` within 10s or the server closes the connection (stale-connection
+- Heartbeat: server sends a WebSocket protocol ping and `{"type":"ping",...}` every 15s.
+  Either the automatic protocol pong or a client `{"type":"pong",...}` reply must arrive
+  within 10s or the server closes the connection (stale-connection
   cleanup on a kiosk tablet that can silently drop Wi-Fi).
 - Client reconnect policy (frontend responsibility, documented here for the contract): on
   close/error, exponential backoff starting at 1s, capped at 30s, indefinitely — this is a
