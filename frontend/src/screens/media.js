@@ -51,7 +51,7 @@ export function mount(container, ctx) {
     muteBtn.querySelector("use").setAttribute("href", `#icon-${muted ? "volume-mute" : "volume-high"}`);
   }
 
-  const spotifyChip = createChip({ id: "spotify", label: "Spotify", active: true, onClick: () => {} });
+  const spotifyChip = createChip({ id: "spotify", label: "Spotify", active: false, onClick: () => {} });
   const browserChip = createChip({ id: "browser", label: "Browser Media", active: false, onClick: () => {} });
   const sourceRow = el("div", { class: "panel panel-pad media-source-row" }, [
     el("h3", { class: "panel-title" }, "Source"),
@@ -77,9 +77,12 @@ export function mount(container, ctx) {
     renderAlbumArt(np.album_art_url);
     renderProgress(np);
     playBtn.querySelector("use").setAttribute("href", `#icon-${np.is_playing ? "pause" : "play"}`);
-    const isSpotify = String(np.app || "").toLowerCase() === "spotify";
+    const appName = String(np.app || "").toLowerCase();
+    const isSpotify = appName === "spotify";
+    const isYoutube = appName.includes("youtube") || appName.includes("chromium") || appName.includes("chrome") || appName.includes("browser");
     spotifyChip.classList.toggle("active", isSpotify);
     browserChip.classList.toggle("active", !isSpotify);
+    browserChip.querySelector("span").textContent = isYoutube ? "YouTube" : "Browser Media";
   }
 
   function renderAlbumArt(url) {
