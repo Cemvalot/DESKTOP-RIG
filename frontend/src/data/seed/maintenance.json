@@ -1,0 +1,15 @@
+{
+  "commands": [
+    { "id": "flush-dns", "label": "Flush DNS Cache", "icon": "wifi", "handler": "flush_dns", "dangerous": false },
+    { "id": "empty-recycle-bin", "label": "Empty Recycle Bin", "icon": "close", "handler": "empty_recycle_bin", "dangerous": true },
+    { "id": "restart-spotify", "label": "Restart Spotify", "icon": "spotify", "handler": "restart_spotify", "dangerous": false },
+    { "id": "clear-temp", "label": "Clear Temp Files", "icon": "close", "handler": "clear_temp_files", "dangerous": true },
+    { "id": "open-task-manager", "label": "Task Manager", "icon": "monitor", "handler": "open_task_manager", "dangerous": false },
+    { "id": "take-screenshot", "label": "Screenshot", "icon": "camera", "handler": "take_screenshot", "dangerous": false },
+    { "id": "open-controller-tools", "label": "Controller Tools", "icon": "controller", "handler": "open_controller_tools", "dangerous": false },
+    { "id": "toggle-game-mode", "label": "Game Mode", "icon": "gamepad-scene", "handler": "toggle_game_mode", "dangerous": false },
+    { "id": "toggle-perf-overlay", "label": "Performance Overlay", "icon": "gauge", "handler": "toggle_perf_overlay", "dangerous": false },
+    { "id": "start-screen-recording", "label": "Start Screen Recording", "icon": "video", "handler": "start_screen_recording", "dangerous": false },
+    { "id": "stop-screen-recording", "label": "Stop Screen Recording", "icon": "video", "handler": "stop_screen_recording", "dangerous": false }
+  ]
+}

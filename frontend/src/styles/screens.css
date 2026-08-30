@@ -1,0 +1,154 @@
+/* frontend/src/styles/screens.css — per-screen layout, matching
+ * design-system.md §15 wireframes on the fixed 1232x632 content area. */
+
+.screen-inner { height: 100%; display: grid; gap: var(--space-4); }
+.panel-pad { padding: var(--space-4); }
+
+/* ── Home (§15.2) ─────────────────────────────────────────────────────── */
+.screen-home .screen-inner {
+  grid-template-columns: 720px 1fr;
+  grid-template-rows: 400px 1fr;
+  grid-template-areas:
+    "launch   nowplaying"
+    "status   power";
+}
+.panel-launch { grid-area: launch; display: flex; flex-direction: column; }
+.panel-status { grid-area: status; display: flex; flex-direction: column; }
+.panel-nowplaying, .panel-power { grid-column: 2; position: absolute; left: 736px; right: 0; box-sizing: border-box; }
+.panel-nowplaying { top: 0; height: calc(66.666% - 8px); }
+.panel-power { bottom: 0; height: calc(33.333% - 8px); }
+
+.launch-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 128px);
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+  justify-content: start;
+  flex: 1;
+  min-height: 0;
+}
+.launch-grid .tile { width: 128px; height: auto; min-height: 0; }
+.launch-grid .launch-ai { grid-column: 4; }
+.launch-grid .launch-codex { grid-row: 1; }
+.launch-grid .launch-claude { grid-row: 2; }
+.launch-grid .launch-chatgpt { grid-column: 5; grid-row: 2; }
+
+.nowplaying-panel { display: flex; flex-direction: column; gap: var(--space-3); }
+.nowplaying-top { display: flex; gap: var(--space-3); align-items: center; }
+.album-thumb {
+  width: 160px; height: 160px; border-radius: var(--radius-md);
+  background: var(--bg-4); flex: none;
+  display: flex; align-items: center; justify-content: center; color: var(--text-tertiary); overflow: hidden;
+}
+.album-thumb img, .album-thumb video { width: 100%; height: 100%; object-fit: cover; }
+.nowplaying-meta .title { font: var(--type-body-lg); margin: 0; }
+.nowplaying-meta .artist { font: var(--type-caption); color: var(--text-secondary); margin: 2px 0 0; }
+.transport-row { display: flex; align-items: center; justify-content: center; gap: var(--space-4); }
+.transport-row .btn-icon-compact.play { width: 64px; height: 64px; background: var(--accent); color: var(--text-inverse); border-color: var(--accent); }
+.mic-vol-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+
+.status-grid { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, minmax(0, 1fr)); gap: var(--space-2); flex: 1; min-height: 0; }
+
+.power-cluster { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: var(--space-3); }
+.power-cluster .power-row { display: flex; gap: var(--space-4); }
+
+/* ── Gaming (§15.3) ───────────────────────────────────────────────────── */
+.screen-gaming .screen-inner {
+  grid-template-columns: 1fr 1fr 360px;
+  grid-template-rows: 210px 1fr 1fr;
+  grid-template-areas:
+    "quick   gamemode tools"
+    "recent  recent    tools"
+    "fav     fav       tools";
+}
+.panel-quick { grid-area: quick; }
+.panel-gamemode { grid-area: gamemode; }
+.panel-tools { grid-area: tools; display: flex; flex-direction: column; gap: var(--space-3); }
+.panel-recent { grid-area: recent; }
+.panel-fav { grid-area: fav; }
+
+.tile-row { display: flex; gap: var(--space-4); flex-wrap: wrap; }
+.game-mode-toggle {
+  width: 100%; height: 72px;
+  border-radius: var(--radius-md);
+  background: var(--bg-3); border: 1px solid var(--border-default);
+  display: flex; align-items: center; justify-content: center; gap: var(--space-3);
+  font: var(--type-label); color: var(--text-primary);
+}
+.game-mode-toggle.on {
+  background: var(--accent-dim-bg);
+  border-color: var(--accent-border);
+  color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent-border), 0 0 16px var(--accent-glow);
+}
+
+/* ── Media (§15.4) ────────────────────────────────────────────────────── */
+.screen-media .screen-inner { grid-template-rows: 1fr auto auto; grid-template-areas: "top" "transport" "bottom"; }
+.media-top { grid-area: top; display: flex; align-items: center; justify-content: center; gap: var(--space-6); }
+.media-album-art {
+  width: 420px; height: 236px; border-radius: var(--radius-lg);
+  background: var(--bg-2); border: 1px solid var(--border-default);
+  display: flex; align-items: center; justify-content: center; color: var(--text-tertiary); overflow: hidden;
+}
+.media-album-art img, .media-album-art video { width: 100%; height: 100%; object-fit: contain; }
+.media-info { max-width: 480px; }
+.media-info .track-title { font: var(--type-h2); margin: 0 0 var(--space-1); }
+.media-info .track-artist { font: var(--type-body); color: var(--text-secondary); margin: 0 0 var(--space-4); }
+.media-progress { display: flex; align-items: center; gap: var(--space-3); }
+.media-progress .t { font: var(--type-caption); font-family: var(--font-mono); color: var(--text-tertiary); }
+.media-progress-track { flex: 1; height: 6px; border-radius: var(--radius-full); background: var(--bg-4); position: relative; }
+.media-progress-fill { position: absolute; top: 0; left: 0; height: 100%; border-radius: var(--radius-full); background: var(--accent); }
+
+.media-transport { grid-area: transport; display: flex; align-items: center; justify-content: center; gap: var(--space-6); margin: var(--space-4) 0; }
+.media-transport .btn-icon-compact.play-lg { width: 96px; height: 96px; background: var(--accent); color: var(--text-inverse); border-color: var(--accent); }
+
+.media-bottom { grid-area: bottom; display: grid; grid-template-columns: 1fr 1fr auto 1fr; gap: var(--space-4); align-items: stretch; }
+.media-bottom > .panel { min-height: 128px; box-sizing: border-box; }
+.media-bottom > .panel { display: flex; flex-direction: column; justify-content: center; }
+.media-bottom > .btn-icon-compact { width: 128px; height: 128px; border-radius: var(--radius-lg); align-self: center; justify-self: center; }
+.media-source-row { grid-column: auto; margin-top: 0; }
+
+/* ── System (§15.5) ───────────────────────────────────────────────────── */
+.screen-system .screen-inner {
+  grid-template-columns: 1fr 380px;
+  grid-template-rows: 248px 1fr;
+  grid-template-areas:
+    "telemetry power"
+    "audio     quickmaint";
+}
+.panel-telemetry { grid-area: telemetry; }
+.panel-sys-power { grid-area: power; }
+.panel-audio { grid-area: audio; }
+.quickmaint-col { grid-area: quickmaint; display: flex; flex-direction: column; gap: var(--space-5); min-height: 0; }
+.quickmaint-col > .panel { flex: none; }
+
+.telemetry-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-3); }
+.quick-actions-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); }
+.maintenance-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); }
+.quick-actions-row .chip, .maintenance-row .chip { width: 100%; min-width: 0; }
+
+.power-cluster.compact { justify-content: flex-start; }
+.power-cluster.compact .power-row { gap: var(--space-3); }
+.btn-action.sm { width: 84px; height: 84px; }
+.btn-action.sm .icon { width: 22px; height: 22px; }
+.btn-action.sm .tile-label { font-size: 12px; }
+
+/* ── Smart Home (§15.6) ───────────────────────────────────────────────── */
+.screen-smarthome .screen-inner {
+  grid-template-columns: 1fr 1fr 320px;
+  grid-template-rows: 220px 140px 1fr;
+  grid-template-areas:
+    "desk    room    scenes"
+    "climate climate  scenes"
+    "hint    hint     hint";
+}
+.panel-desk { grid-area: desk; }
+.panel-room { grid-area: room; }
+.panel-scenes { grid-area: scenes; }
+.panel-climate { grid-area: climate; }
+.panel-hint { grid-area: hint; }
+
+.light-control { display: flex; flex-direction: column; gap: var(--space-3); }
+.light-control .light-header { display: flex; align-items: center; justify-content: space-between; }
+.light-control label.small { font: var(--type-caption); color: var(--text-secondary); }
+.scenes-col { display: flex; flex-direction: column; gap: var(--space-3); align-items: stretch; }

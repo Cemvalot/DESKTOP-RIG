@@ -1,0 +1,46 @@
+{
+  "activeProfile": "default",
+  "profiles": [
+    {
+      "id": "default",
+      "label": "Default",
+      "theme": "auto",
+      "defaultTab": "home",
+      "homeLayout": ["steam", "discord", "browser", "spotify", "files", "terminal", "codex-cli", "claude-cli", "chatgpt"]
+    },
+    {
+      "id": "gaming",
+      "label": "Gaming",
+      "theme": "auto",
+      "defaultTab": "gaming",
+      "homeLayout": ["steam", "steam-library", "discord", "obs", "browser", "files"]
+    },
+    {
+      "id": "work",
+      "label": "Work",
+      "theme": "auto",
+      "defaultTab": "home",
+      "homeLayout": ["browser", "terminal", "files", "discord", "spotify", "steam"]
+    },
+    {
+      "id": "media",
+      "label": "Media",
+      "theme": "auto",
+      "defaultTab": "media",
+      "homeLayout": ["spotify", "browser", "files", "discord", "steam", "terminal"]
+    },
+    {
+      "id": "night",
+      "label": "Night",
+      "theme": "night",
+      "defaultTab": "home",
+      "homeLayout": ["spotify", "browser", "files", "discord", "steam", "terminal"]
+    }
+  ],
+  "themeSchedule": {
+    "enabled": true,
+    "nightStartHour": 22,
+    "nightEndHour": 7,
+    "nightProfileId": "night"
+  }
+}

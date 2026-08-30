@@ -1,0 +1,12 @@
+node_modules/
+*.log
+.env
+dist/
+.DS_Store
+
+# Launchpad server secrets/state (architecture-security.md §7) — added by
+# the server subagent, additive only.
+server/state/
+state/
+config/*.local.json
+

@@ -1,0 +1,11 @@
+{
+  "note": "Static config seed for the Gaming screen's library/recent/favorites rails. A future module can replace this with a live Steam library scan; the frontend data-provider interface is the same either way.",
+  "library": [
+    { "id": "game-a", "label": "Game A", "icon": null, "launch": { "type": "url", "target": "steam://rungameid/000000" } },
+    { "id": "game-b", "label": "Game B", "icon": null, "launch": { "type": "url", "target": "steam://rungameid/000001" } },
+    { "id": "game-c", "label": "Game C", "icon": null, "launch": { "type": "url", "target": "steam://rungameid/000002" } },
+    { "id": "game-d", "label": "Game D", "icon": null, "launch": { "type": "url", "target": "steam://rungameid/000003" } }
+  ],
+  "recentlyPlayed": ["game-a", "game-b", "game-c", "game-d"],
+  "favorites": ["game-a", "game-c"]
+}

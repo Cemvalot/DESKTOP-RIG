@@ -1,0 +1,15 @@
+{
+  "connected": false,
+  "integration": "home_assistant",
+  "note": "Placeholder module per project spec. No live device control in v1 — tiles render as configured but disabled/inert until a Home Assistant integration module is enabled server-side (see docs/integrations/home-assistant.md).",
+  "tiles": {
+    "deskLight": { "id": "desk-light", "label": "Desk Light", "type": "light", "supportsBrightness": true, "supportsColorTemp": true },
+    "roomLight": { "id": "room-light", "label": "Room Light", "type": "light", "supportsBrightness": true, "supportsColorTemp": true },
+    "climate": { "id": "room-temp", "label": "Room Temperature", "type": "sensor" }
+  },
+  "scenes": [
+    { "id": "focus", "label": "Focus" },
+    { "id": "gaming", "label": "Gaming" },
+    { "id": "all-off", "label": "All Lights Off" }
+  ]
+}

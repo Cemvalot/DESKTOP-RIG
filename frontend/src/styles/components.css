@@ -1,0 +1,478 @@
+/* frontend/src/styles/components.css — reusable component styles */
+
+/* ── Feedback state mixins (design-system.md §11) ──────────────────────── */
+.press-scale {
+  transition: transform var(--motion-micro) var(--ease-standard),
+              background-color var(--motion-micro) var(--ease-standard),
+              border-color var(--motion-micro) var(--ease-standard);
+}
+.press-scale:active:not(:disabled) { transform: scale(0.96); }
+
+.state-loading { pointer-events: none; position: relative; color: transparent !important; }
+.state-loading::after {
+  content: "";
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 20px; height: 20px;
+  margin: -10px 0 0 -10px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  border-top-color: transparent;
+  animation: lp-pulse 900ms ease-in-out infinite;
+}
+@keyframes lp-pulse { 0%,100% { opacity: 0.4; } 50% { opacity: 1; } }
+
+.state-success { border-color: var(--success) !important; animation: lp-flash-success 600ms var(--ease-in-out); }
+.state-failure { border-color: var(--danger) !important; animation: lp-shake 200ms var(--ease-in-out) 2; }
+@keyframes lp-flash-success {
+  0% { border-color: var(--success); }
+  70% { border-color: var(--success); }
+  100% { border-color: var(--border-default); }
+}
+@keyframes lp-shake {
+  0%,100% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  75% { transform: translateX(3px); }
+}
+
+.state-disabled,
+[disabled] {
+  opacity: 0.4;
+  color: var(--text-tertiary);
+  pointer-events: none;
+}
+
+.state-offline { opacity: 0.5; position: relative; }
+.offline-badge {
+  position: absolute;
+  top: var(--space-2); right: var(--space-2);
+  font: var(--type-caption);
+  color: var(--danger);
+  background: rgba(245,69,92,0.12);
+  border: 1px solid var(--danger);
+  border-radius: var(--radius-sm);
+  padding: 2px 6px;
+}
+
+/* ── Launch tile ─────────────────────────────────────────────────────────*/
+.tile {
+  width: 120px;
+  height: 120px;
+  border-radius: var(--radius-xl);
+  background: var(--bg-2);
+  border: 1px solid var(--border-default);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  color: var(--text-primary);
+}
+.tile:active:not(:disabled) { background: var(--bg-4); }
+.tile .icon { width: 32px; height: 32px; }
+.tile-label { font: var(--type-label); text-align: center; padding: 0 var(--space-2); }
+.tile.tile-sm { width: 96px; height: 96px; }
+.tile.tile-sm .icon { width: 26px; height: 26px; }
+.tile.dragging { opacity: 0.5; }
+.tile.drag-over { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent-border); }
+.tile.favorite-badge { position: relative; }
+.tile .fav-star { position: absolute; top: 6px; right: 6px; width: 16px; height: 16px; color: var(--warning); }
+
+/* ── Standard action button (96px) & compact icon button (72px) ─────────*/
+.btn-action {
+  width: 96px; height: 96px;
+  border-radius: var(--radius-lg);
+  background: var(--bg-2);
+  border: 1px solid var(--border-default);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: var(--space-1);
+  color: var(--text-primary);
+}
+.btn-action.primary {
+  background: var(--accent);
+  color: var(--text-inverse);
+  border-color: var(--accent);
+}
+.btn-action.primary:active:not(:disabled) { background: var(--accent-active); }
+.btn-action:active:not(:disabled) { background: var(--bg-4); }
+.btn-action .icon { width: 28px; height: 28px; }
+.btn-icon-compact {
+  width: 72px; height: 72px;
+  border-radius: var(--radius-full);
+  background: var(--bg-2);
+  border: 1px solid var(--border-default);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-primary);
+}
+.btn-icon-compact:active:not(:disabled) { background: var(--bg-4); }
+
+/* ── Inline chip / pill toggle ───────────────────────────────────────────*/
+.chip {
+  min-width: 96px; height: 56px;
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-full);
+  background: var(--bg-3);
+  border: 1px solid var(--border-default);
+  color: var(--text-primary);
+  font: var(--type-label);
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
+}
+.chip.active {
+  background: var(--accent-dim-bg);
+  border-color: var(--accent-border);
+  color: var(--accent);
+}
+.chip:active:not(:disabled) { background: var(--bg-4); }
+
+/* ── Toggle switch ───────────────────────────────────────────────────────*/
+.toggle {
+  width: 52px; height: 28px;
+  border-radius: var(--radius-full);
+  background: var(--bg-3);
+  border: 1px solid var(--border-default);
+  position: relative;
+  flex: none;
+}
+.toggle::after {
+  content: "";
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--text-secondary);
+  transition: transform var(--motion-sm) var(--ease-standard), background var(--motion-sm);
+}
+.toggle.on { background: var(--accent-dim-bg); border-color: var(--accent-border); }
+.toggle.on::after { transform: translateX(24px); background: var(--accent); }
+
+/* ── Danger button (used inside dialogs/danger clusters) ─────────────────*/
+.btn-danger {
+  background: var(--danger);
+  color: var(--text-inverse);
+  border: 1px solid var(--danger);
+}
+.btn-danger:active:not(:disabled) { background: var(--danger-active); }
+
+/* ── Status card (readouts) ──────────────────────────────────────────────*/
+.status-card {
+  display: flex; align-items: center; gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background: var(--bg-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+}
+.status-card .icon { color: var(--text-secondary); width: 18px; height: 18px; }
+.status-card .value { font: var(--type-numeric-sm); font-family: var(--font-mono); }
+.status-card .sub { font: var(--type-caption); color: var(--text-secondary); }
+.status-card.warn .value { color: var(--warning); }
+.status-card.danger .value { color: var(--danger); }
+
+/* ── Slider ───────────────────────────────────────────────────────────────*/
+.slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: var(--bg-4);
+  outline: none;
+}
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--text-inverse);
+  cursor: pointer;
+}
+.slider::-moz-range-thumb {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--text-inverse);
+  cursor: pointer;
+}
+
+/* ── Bottom tab bar ───────────────────────────────────────────────────────*/
+.tab-item {
+  width: 256px; height: 96px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: var(--space-1);
+  color: var(--text-secondary);
+  position: relative;
+}
+.tab-item .icon { width: 26px; height: 26px; }
+.tab-item .tab-label { font: var(--type-label); }
+.tab-item.active { color: var(--accent); background: var(--accent-dim-bg); }
+.tab-item.active::after {
+  content: "";
+  position: absolute;
+  bottom: 8px; left: 50%;
+  width: 32px; height: 3px;
+  border-radius: var(--radius-full);
+  background: var(--accent);
+  transform: translateX(-50%);
+}
+
+/* ── Status strip pieces ─────────────────────────────────────────────────*/
+.status-strip .pc-name { display: flex; align-items: center; gap: var(--space-2); }
+.status-strip .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); flex: none; }
+.status-strip .dot.reconnecting { background: var(--warning); }
+.status-strip .dot.offline { background: var(--danger); }
+.status-strip .clock { font: var(--type-caption); font-family: var(--font-mono); color: var(--text-primary); }
+.status-strip .right-cluster { display: flex; align-items: center; gap: var(--space-4); }
+.status-strip button.gear-btn { display: flex; align-items: center; color: var(--text-secondary); }
+.status-strip button.gear-btn .icon { width: 18px; height: 18px; }
+.status-strip button.conn-badge { display: flex; align-items: center; gap: var(--space-2); color: inherit; }
+
+/* ── Confirmation dialog (design-system.md §15.7) ────────────────────────*/
+.overlay-backdrop {
+  position: absolute;
+  inset: 0;
+  background: var(--bg-overlay);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 50;
+  opacity: 0;
+  transition: opacity var(--motion-md) var(--ease-standard);
+}
+.overlay-backdrop.in { opacity: 1; }
+
+.dialog {
+  width: 480px;
+  min-height: 260px;
+  background: var(--bg-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  padding: var(--space-6);
+  display: flex; flex-direction: column;
+  transform: scale(0.98);
+  opacity: 0;
+  transition: transform var(--motion-md) var(--ease-standard), opacity var(--motion-md) var(--ease-standard);
+}
+.overlay-backdrop.in .dialog { transform: scale(1); opacity: 1; }
+.dialog-title { display: flex; align-items: center; gap: var(--space-3); font: var(--type-h2); margin: 0 0 var(--space-3); }
+.dialog-title .icon { color: var(--warning); width: 24px; height: 24px; }
+.dialog-body { font: var(--type-body); color: var(--text-secondary); flex: 1; margin-bottom: var(--space-5); }
+.dialog-countdown { font: var(--type-caption); color: var(--text-tertiary); margin-bottom: var(--space-3); font-family: var(--font-mono); }
+.dialog-actions { display: flex; justify-content: flex-end; align-items: center; gap: var(--space-4); }
+.dialog-actions .btn-cancel {
+  flex: 1;
+  max-width: 220px;
+  height: 64px;
+  border-radius: var(--radius-md);
+  background: var(--bg-3);
+  border: 1px solid var(--border-strong);
+  color: var(--text-primary);
+  font: var(--type-label);
+}
+.dialog-actions .btn-confirm-danger {
+  height: 56px;
+  padding: 0 var(--space-5);
+  border-radius: var(--radius-md);
+  font: var(--type-label);
+  display: flex; align-items: center; gap: var(--space-2);
+}
+
+/* ── Toast ────────────────────────────────────────────────────────────────*/
+.toast-stack {
+  position: absolute;
+  top: 56px; right: 24px;
+  display: flex; flex-direction: column; gap: var(--space-2);
+  z-index: 60;
+  width: 320px;
+}
+.toast {
+  background: var(--bg-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  font: var(--type-body);
+  display: flex; align-items: center; gap: var(--space-3);
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity var(--motion-md) var(--ease-standard), transform var(--motion-md) var(--ease-standard);
+}
+.toast.in { opacity: 1; transform: translateY(0); }
+.toast.success { border-color: var(--success); }
+.toast.error { border-color: var(--danger); }
+.toast .icon { flex: none; width: 18px; height: 18px; }
+.toast.success .icon { color: var(--success); }
+.toast.error .icon { color: var(--danger); }
+
+/* ── Connection-lost overlay (design-system.md §15.8) ───────────────────*/
+.reconnect-overlay {
+  position: absolute; inset: 0;
+  background: var(--bg-0);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: var(--space-4);
+  z-index: 40;
+}
+.reconnect-ring {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  border: 2px solid var(--warning);
+  border-top-color: transparent;
+  animation: lp-pulse 900ms ease-in-out infinite;
+}
+.reconnect-overlay h2 { font: var(--type-h2); margin: 0; }
+.reconnect-overlay .sub { font: var(--type-body); color: var(--text-secondary); }
+.reconnect-overlay .retry-btn {
+  margin-top: var(--space-3);
+  height: 56px; padding: 0 var(--space-6);
+  border-radius: var(--radius-md);
+  background: var(--accent); color: var(--text-inverse);
+  font: var(--type-label);
+}
+.reconnect-badge {
+  position: absolute; top: 88px; left: 50%; transform: translateX(-50%);
+  color: var(--success); font: var(--type-label);
+  background: rgba(53,212,138,0.12);
+  border: 1px solid var(--success);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+}
+
+/* ── Idle / screensaver (design-system.md §13, §15.9) ───────────────────*/
+.idle-screen {
+  position: absolute; inset: 0;
+  background: var(--bg-0);
+  z-index: 70;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 500ms var(--ease-standard);
+}
+.idle-screen.in { opacity: 1; pointer-events: auto; }
+.idle-clock-block {
+  position: absolute;
+  display: flex; flex-direction: column; align-items: center;
+  text-align: center;
+}
+.idle-clock-block .clock { font: var(--type-display); }
+.idle-clock-block .date { font: var(--type-body-lg); color: var(--text-secondary); margin-top: var(--space-2); }
+.idle-clock-block .pcname { font: var(--type-caption); color: var(--text-tertiary); margin-top: var(--space-3); }
+.idle-dot {
+  position: absolute; bottom: 24px; right: 24px;
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--text-tertiary);
+}
+
+/* ── Screen dim overlay (Settings > screen dim, simulated) ──────────────*/
+.dim-overlay {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,0.55);
+  pointer-events: none;
+  z-index: 65;
+  display: none;
+}
+.dim-overlay.on { display: block; }
+
+/* ── Settings panel ───────────────────────────────────────────────────────*/
+.settings-panel {
+  position: absolute;
+  top: 56px; right: 24px;
+  width: 360px;
+  max-height: 632px;
+  overflow-y: auto;
+  background: var(--bg-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  padding: var(--space-5);
+  z-index: 55;
+  transform: scale(0.98);
+  opacity: 0;
+  transition: transform var(--motion-md) var(--ease-standard), opacity var(--motion-md) var(--ease-standard);
+}
+.settings-panel.in { transform: scale(1); opacity: 1; }
+.settings-panel h2 { font: var(--type-h2); margin: 0 0 var(--space-4); }
+.settings-section { margin-bottom: var(--space-5); }
+.settings-section h3 { font: var(--type-caption); text-transform: uppercase; color: var(--text-secondary); margin: 0 0 var(--space-3); }
+.settings-row { display: flex; align-items: center; justify-content: space-between; padding: var(--space-2) 0; gap: var(--space-3); }
+.settings-row .label { font: var(--type-body); }
+.settings-row select {
+  background: var(--bg-4); color: var(--text-primary); border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm); padding: var(--space-2) var(--space-3);
+}
+.settings-close { position: absolute; top: var(--space-3); right: var(--space-3); }
+details.dev-disclosure summary { cursor: pointer; font: var(--type-caption); color: var(--text-tertiary); }
+.btn-secondary {
+  height: 44px; padding: 0 var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--bg-4); border: 1px solid var(--border-default);
+  color: var(--text-primary); font: var(--type-label);
+}
+
+/* ── Pairing screen ───────────────────────────────────────────────────────*/
+.pairing-screen {
+  position: absolute; inset: 0;
+  background: var(--bg-0);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: var(--space-5);
+  z-index: 80;
+}
+.pairing-screen h1 { font: var(--type-h1); margin: 0; }
+.pairing-code-input {
+  display: flex; gap: var(--space-2);
+}
+.pairing-code-input input {
+  width: 56px; height: 72px;
+  text-align: center;
+  font: var(--type-h1);
+  font-family: var(--font-mono);
+  background: var(--bg-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  text-transform: uppercase;
+}
+.pairing-code-input input:focus { border-color: var(--accent); }
+.pairing-video { width: 320px; height: 240px; background: var(--bg-2); border-radius: var(--radius-lg); object-fit: cover; }
+.pairing-status { font: var(--type-body); color: var(--text-secondary); min-height: 24px; }
+
+/* ── Command history drawer ──────────────────────────────────────────────*/
+.history-drawer {
+  position: absolute;
+  bottom: 96px; right: 24px;
+  width: 360px;
+  max-height: 360px;
+  overflow-y: auto;
+  background: var(--bg-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  padding: var(--space-4);
+  z-index: 45;
+  transform: translateY(8px);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform var(--motion-md) var(--ease-standard), opacity var(--motion-md) var(--ease-standard);
+}
+.history-drawer.in { transform: translateY(0); opacity: 1; pointer-events: auto; }
+.history-row { display: flex; justify-content: space-between; padding: var(--space-2) 0; border-bottom: 1px solid var(--border-subtle); font: var(--type-caption); }
+.history-row:last-child { border-bottom: none; }
+.history-row .result-success { color: var(--success); }
+.history-row .result-error { color: var(--danger); }
+.history-row .result-pending { color: var(--text-tertiary); }
+
+/* ── Edit-layout mode ─────────────────────────────────────────────────────*/
+.edit-layout-banner {
+  position: absolute;
+  top: -48px; left: 0; right: 0;
+  height: 40px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 var(--space-2);
+  font: var(--type-caption);
+  color: var(--accent);
+}
+
+/* ── Disabled placeholder card (Smart Home, design-system.md §15.6) ──────*/
+.placeholder-card {
+  border: 1px dashed var(--border-default);
+  border-radius: var(--radius-lg);
+  color: var(--text-tertiary);
+  display: flex; align-items: center; justify-content: center; gap: var(--space-3);
+  font: var(--type-body);
+  padding: var(--space-4);
+}
+.placeholder-card .icon { width: 20px; height: 20px; }

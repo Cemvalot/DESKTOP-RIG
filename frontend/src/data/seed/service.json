@@ -1,0 +1,23 @@
+{
+  "port": 8787,
+  "pcName": "DESKTOP-RIG",
+  "dangerousConfirmWindowSeconds": 10,
+  "dangerousConfirmWindowMaxSeconds": 60,
+  "statusUpdateIntervalMs": 1000,
+  "statsSlowRefreshMs": 2500,
+  "pairingCodeTtlSeconds": 300,
+  "restrictToPrivateSubnet": true,
+  "rateLimits": {
+    "generalPerMinute": 60,
+    "dangerousExecutePerMinute": 5,
+    "confirmPerMinute": 10,
+    "pairingClaimPer5Min": 10,
+    "wsReconnectPerMinute": 20
+  },
+  "mockExec": false,
+  "wakeOnLan": {
+    "enabled": false,
+    "macAddress": "00:00:00:00:00:00",
+    "broadcastAddress": "255.255.255.255"
+  }
+}
