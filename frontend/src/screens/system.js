@@ -64,15 +64,15 @@ export function mount(container, ctx) {
   ]);
 
   const maintenanceRow = el("div", { class: "maintenance-row" });
-  const maintenancePanel = el("div", { class: "panel panel-pad" }, [
+  const maintenancePanel = el("div", { class: "panel panel-maintenance panel-pad" }, [
     el("h3", { class: "panel-title" }, "Maintenance"),
     maintenanceRow,
   ]);
 
-  const quickMaintCol = el("div", { class: "quickmaint-col" }, [quickActionsPanel, maintenancePanel]);
+  const quickAudioCol = el("div", { class: "quickaudio-col" }, [quickActionsPanel, audioPanel]);
 
   container.appendChild(
-    el("div", { class: "screen-inner" }, [telemetryPanel, powerPanel, audioPanel, quickMaintCol])
+    el("div", { class: "screen-inner" }, [telemetryPanel, powerPanel, maintenancePanel, quickAudioCol])
   );
 
   function runMaintenance(taskId, tileEl, successMessage) {

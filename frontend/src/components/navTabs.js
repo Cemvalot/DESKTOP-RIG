@@ -7,7 +7,7 @@ import { hapticPress } from "./feedback.js";
 export const TABS = [
   { id: "home", label: "Home", icon: "home" },
   { id: "gaming", label: "Gaming", icon: "controller" },
-  { id: "media", label: "Media", icon: "spotify" },
+  { id: "media", label: "Media", icon: "video" },
   { id: "system", label: "System", icon: "cpu" },
   { id: "smarthome", label: "Smart Home", icon: "lightbulb" },
 ];
