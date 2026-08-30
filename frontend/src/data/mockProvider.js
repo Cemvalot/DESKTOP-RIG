@@ -282,6 +282,12 @@ export function createMockProvider() {
       return commandHistory.slice(0, 10);
     },
 
+    async clearCommandHistory() {
+      const cleared = commandHistory.length;
+      commandHistory.length = 0;
+      return { cleared };
+    },
+
     async wol() {
       await simulateDelay(200, 400);
       return { sent: true };

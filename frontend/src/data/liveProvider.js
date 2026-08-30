@@ -358,6 +358,10 @@ export function createLiveProvider() {
       return data.history || [];
     },
 
+    async clearCommandHistory() {
+      return apiFetch("/commands/history", { method: "DELETE" });
+    },
+
     async wol() {
       return apiFetch("/wol", { method: "POST", body: {} });
     },

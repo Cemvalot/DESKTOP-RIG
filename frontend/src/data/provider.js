@@ -81,6 +81,7 @@
 // async setMic({ mute }): Promise<{ muted }>
 //
 // async getCommandHistory(): Promise<CommandHistoryEntry[]>
+// async clearCommandHistory(): Promise<{ cleared: number }>
 //
 // async wol(): Promise<{ sent: true }>
 //   POST /api/v1/wol equivalent (Wake-on-LAN magic packet).

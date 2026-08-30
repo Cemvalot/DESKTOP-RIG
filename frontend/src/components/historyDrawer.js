@@ -6,7 +6,12 @@ import { el, getLayer } from "./dom.js";
 
 export function createHistoryDrawer({ provider }) {
   const list = el("div", {});
-  const drawer = el("div", { class: "history-drawer" }, [el("h3", { class: "panel-title" }, "Recent Commands"), list]);
+  const clearBtn = el("button", { class: "history-clear", type: "button" }, "Clear");
+  const closeBtn = el("button", { class: "history-close", type: "button", "aria-label": "Close recent commands" }, "×");
+  const drawer = el("div", { class: "history-drawer" }, [
+    el("div", { class: "history-header" }, [el("h3", { class: "panel-title" }, "Recent Commands"), clearBtn, closeBtn]),
+    list,
+  ]);
   getLayer("overlay-root").appendChild(drawer);
 
   async function refresh() {
@@ -44,6 +49,17 @@ export function createHistoryDrawer({ provider }) {
     open = false;
     drawer.classList.remove("in");
   }
+
+  clearBtn.addEventListener("click", async () => {
+    clearBtn.disabled = true;
+    try {
+      await provider.clearCommandHistory();
+      await refresh();
+    } finally {
+      clearBtn.disabled = false;
+    }
+  });
+  closeBtn.addEventListener("click", close);
 
   return { el: drawer, toggle, close, refresh };
 }

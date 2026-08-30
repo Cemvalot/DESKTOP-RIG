@@ -128,6 +128,14 @@ function buildCommandsRouter({ config, executor, mediaController, confirmStore, 
     res.status(200).json({ history: commandHistory.list() });
   });
 
+  // DELETE /api/v1/commands/history — Bearer. Explicitly clear the
+  // in-memory recent-command list for every paired dashboard.
+  router.delete('/commands/history', (req, res) => {
+    const cleared = commandHistory.clear();
+    logger.info('command history cleared', { token_id: req.auth.tokenId, cleared });
+    res.status(200).json({ cleared });
+  });
+
   return router;
 }
 

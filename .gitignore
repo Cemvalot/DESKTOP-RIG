@@ -6,7 +6,6 @@ dist/
 
 # Launchpad server secrets/state (architecture-security.md §7) — added by
 # the server subagent, additive only.
-server/state/
-state/
+/server/state/
+/state/
 config/*.local.json
-
