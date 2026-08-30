@@ -74,14 +74,14 @@
 .tile[data-id="spotify"] { --tile-accent: #1ed760; background: linear-gradient(145deg, rgba(25,180,95,.25), rgba(18,85,55,.1)); border-color: rgba(30,215,96,.46); }
 .tile[data-id="discord"] { --tile-accent: #aab8f5; background: linear-gradient(145deg, rgba(92,108,210,.25), rgba(39,45,105,.1)); border-color: rgba(142,161,225,.45); }
 .tile[data-id="browser"] { background: linear-gradient(145deg, rgba(55,160,220,.22), rgba(24,76,110,.1)); border-color: rgba(89,190,235,.4); }
-.tile[data-id="files"] { background: linear-gradient(145deg, rgba(220,170,55,.2), rgba(90,65,20,.1)); border-color: rgba(242,193,75,.42); }
+.tile[data-id="youtube"] { background: linear-gradient(145deg, rgba(255,0,0,.26), rgba(105,0,0,.1)); border-color: rgba(255,72,72,.5); }
+.tile[data-id="netflix"] { background: linear-gradient(145deg, rgba(229,9,20,.24), rgba(70,0,5,.12)); border-color: rgba(229,9,20,.48); }
 .tile[data-id="codex-cli"], .tile[data-id="claude-cli"], .tile[data-id="chatgpt"] { background: linear-gradient(145deg, rgba(136,105,235,.24), rgba(64,45,135,.1)); border-color: rgba(174,157,255,.42); }
-.tile[data-id="steam"] .icon, .tile[data-id="spotify"] .icon, .tile[data-id="discord"] .icon { color: var(--tile-accent); }
 .tile:active:not(:disabled) { background: var(--bg-4); }
-.tile .icon { width: 32px; height: 32px; }
+.tile .icon { width: 38px; height: 38px; }
 .tile-label { font: var(--type-label); text-align: center; padding: 0 var(--space-2); }
 .tile.tile-sm { width: 96px; height: 96px; }
-.tile.tile-sm .icon { width: 26px; height: 26px; }
+.tile.tile-sm .icon { width: 30px; height: 30px; }
 .tile.dragging { opacity: 0.5; }
 .tile.drag-over { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent-border); }
 .tile.favorite-badge { position: relative; }

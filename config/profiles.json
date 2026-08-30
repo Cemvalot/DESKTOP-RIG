@@ -6,35 +6,35 @@
       "label": "Default",
       "theme": "auto",
       "defaultTab": "home",
-      "homeLayout": ["steam", "discord", "browser", "spotify", "files", "terminal", "codex-cli", "claude-cli", "chatgpt"]
+      "homeLayout": ["steam", "discord", "browser", "spotify", "youtube", "netflix", "terminal", "codex-cli", "claude-cli", "chatgpt"]
     },
     {
       "id": "gaming",
       "label": "Gaming",
       "theme": "auto",
       "defaultTab": "gaming",
-      "homeLayout": ["steam", "steam-library", "discord", "obs", "browser", "files"]
+      "homeLayout": ["steam", "steam-library", "discord", "obs", "browser", "youtube", "netflix"]
     },
     {
       "id": "work",
       "label": "Work",
       "theme": "auto",
       "defaultTab": "home",
-      "homeLayout": ["browser", "terminal", "files", "discord", "spotify", "steam"]
+      "homeLayout": ["browser", "terminal", "discord", "spotify", "youtube", "netflix", "steam"]
     },
     {
       "id": "media",
       "label": "Media",
       "theme": "auto",
       "defaultTab": "media",
-      "homeLayout": ["spotify", "browser", "files", "discord", "steam", "terminal"]
+      "homeLayout": ["spotify", "youtube", "netflix", "browser", "discord", "steam", "terminal"]
     },
     {
       "id": "night",
       "label": "Night",
       "theme": "night",
       "defaultTab": "home",
-      "homeLayout": ["spotify", "browser", "files", "discord", "steam", "terminal"]
+      "homeLayout": ["spotify", "youtube", "netflix", "browser", "discord", "steam", "terminal"]
     }
   ],
   "themeSchedule": {

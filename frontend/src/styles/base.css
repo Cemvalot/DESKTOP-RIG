@@ -58,6 +58,7 @@ button:disabled { cursor: default; }
   flex: none;
   color: currentColor;
 }
+.app-icon { object-fit: contain; }
 
 .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 

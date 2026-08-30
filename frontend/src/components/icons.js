@@ -1,8 +1,21 @@
 // frontend/src/components/icons.js
 //
-// Single inline SVG sprite per design-system.md §7: 24x24 viewBox, 2px
-// stroke, round caps/joins, stroke: currentColor. Loaded once, referenced
-// everywhere via <svg class="icon"><use href="#icon-NAME"/></svg>.
+// Generic interface controls use the lightweight inline SVG sprite. Branded
+// applications use their real published/installed image assets instead of
+// approximations drawn into the sprite.
+
+const APP_ICON_ASSETS = {
+  steam: "./assets/apps/steam.png",
+  discord: "./assets/apps/discord.png",
+  browser: "./assets/apps/browser.png",
+  spotify: "./assets/apps/spotify.png",
+  youtube: "./assets/apps/youtube.png",
+  netflix: "./assets/apps/netflix.png",
+  terminal: "./assets/apps/terminal.png",
+  codex: "./assets/apps/codex.png",
+  claude: "./assets/apps/claude.ico",
+  chatgpt: "./assets/apps/chatgpt.png",
+};
 
 const SYMBOLS = {
   play: `<polygon points="6,4 20,12 6,20" fill="currentColor" stroke="none"/>`,
@@ -25,15 +38,7 @@ const SYMBOLS = {
   gpu: `<rect x="3" y="7" width="18" height="10" rx="2"/><circle cx="8" cy="12" r="2"/><circle cx="14" cy="12" r="2"/><line x1="3" y1="20" x2="21" y2="20"/>`,
   ram: `<rect x="4" y="8" width="16" height="8" rx="1"/><line x1="7" y1="8" x2="7" y2="5"/><line x1="11" y1="8" x2="11" y2="5"/><line x1="15" y1="8" x2="15" y2="5"/><line x1="17" y1="16" x2="17" y2="19"/>`,
   thermometer: `<path d="M12 3a2 2 0 0 0-2 2v9.5a4 4 0 1 0 4 0V5a2 2 0 0 0-2-2z"/><circle cx="12" cy="18" r="1.5" fill="currentColor" stroke="none"/>`,
-  steam: `<circle cx="12" cy="12" r="9"/><circle cx="15.5" cy="8.5" r="2.4"/><circle cx="8" cy="15.5" r="2.2"/><path d="m9.9 14.5 3.5-4.1"/><path d="M3.4 11.2 7 12.8"/>`,
-  discord: `<path d="M6 7.5a13 13 0 0 1 12 0 11 11 0 0 1 2 9.5 12 12 0 0 1-4-2 10 10 0 0 1-8 0 12 12 0 0 1-4 2 11 11 0 0 1 2-9.5z"/><circle cx="9" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="15" cy="12" r="1.2" fill="currentColor" stroke="none"/>`,
-  browser: `<path d="M12 3a9 9 0 0 1 7.8 4.5H12a4.5 4.5 0 0 0-3.9 2.3L5.2 5.3A9 9 0 0 1 12 3z" fill="#ea4335" stroke="none"/><path d="M19.8 7.5A9 9 0 0 1 12 21l3.9-6.8A4.5 4.5 0 0 0 12 12H20a9 9 0 0 0-.2-4.5z" fill="#fbbc05" stroke="none"/><path d="M12 21a9 9 0 0 1-7.8-13.5L8.1 14a4.5 4.5 0 0 0 3.9 2.3h7.8A9 9 0 0 1 12 21z" fill="#34a853" stroke="none"/><circle cx="12" cy="12" r="4.2" fill="#4285f4" stroke="none"/>`,
-  spotify: `<circle cx="12" cy="12" r="9"/><path d="M7 10c3.5-1 8-.6 10.3 1"/><path d="M7.3 13.2c3-.8 6.7-.5 8.7.9"/><path d="M7.6 16.2c2.5-.6 5.4-.4 7 .7"/>`,
   folder: `<path d="M3 7a1 1 0 0 1 1-1h5l2 2h9a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7z"/>`,
-  terminal: `<rect x="3" y="4" width="18" height="16" rx="2"/><polyline points="7,9 11,12 7,15"/><line x1="12" y1="15" x2="17" y2="15"/>`,
-  codex: `<path d="M12 3.5 14.1 9l5.4-1.6-3.7 4.2 4.7 3-5.7.4.7 5.6-3.5-4.5-3.5 4.5.7-5.6-5.7-.4 4.7-3-3.7-4.2L9.9 9 12 3.5z"/>`,
-  claude: `<path d="M12 3.5 14.2 9.8 20.5 12l-6.3 2.2L12 20.5l-2.2-6.3L3.5 12l6.3-2.2L12 3.5z"/>`,
-  chatgpt: `<path d="M12 3a4 4 0 0 1 3.5 2.1A4 4 0 0 1 20 9a4 4 0 0 1-.5 7.2A4 4 0 0 1 16 21a4 4 0 0 1-3.5-2.1A4 4 0 0 1 8 15a4 4 0 0 1 .5-7.2A4 4 0 0 1 12 3z"/><path d="m8.5 8.2 7 4M8.5 15.8l7-4M12 3v8M16 21v-8M20 9l-7 4M4 15l7-4"/>`,
   controller: `<rect x="3" y="8" width="18" height="9" rx="4"/><line x1="7" y1="11" x2="7" y2="14"/><line x1="5.5" y1="12.5" x2="8.5" y2="12.5"/><circle cx="16" cy="11.5" r="1" fill="currentColor" stroke="none"/><circle cx="18" cy="13.5" r="1" fill="currentColor" stroke="none"/>`,
   camera: `<path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.4"/>`,
   video: `<rect x="3" y="6" width="12" height="12" rx="2"/><polygon points="21,8 15,12 21,16" fill="currentColor" stroke="none"/>`,
@@ -76,7 +81,9 @@ export function injectIconSprite() {
 
 /** Returns an HTML string for an <svg class="icon ..."><use .../></svg> */
 export function iconMarkup(name, extraClass = "") {
+  const asset = APP_ICON_ASSETS[name];
+  if (asset) return `<img class="icon app-icon ${extraClass}" src="${asset}" alt="" draggable="false">`;
   return `<svg class="icon ${extraClass}"><use href="#icon-${name}"></use></svg>`;
 }
 
-export const ICON_NAMES = Object.keys(SYMBOLS);
+export const ICON_NAMES = [...Object.keys(SYMBOLS), ...Object.keys(APP_ICON_ASSETS)];
