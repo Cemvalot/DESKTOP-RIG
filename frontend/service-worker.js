@@ -5,7 +5,7 @@
 // after a network blip. Never caches live data — /api/* and the WS
 // upgrade are always passed straight to the network.
 
-const CACHE_NAME = "launchpad-shell-v31";
+const CACHE_NAME = "launchpad-shell-v32";
 
 const SHELL_FILES = [
   "./",
@@ -92,18 +92,19 @@ self.addEventListener("fetch", (event) => {
     return; // let the network handle live data / non-GET / cross-origin as normal
   }
 
+  // Prefer the LAN server whenever it is reachable so a newly deployed UI
+  // appears after one reload. The former cache-first strategy returned stale
+  // modules (for example the old Spotify artwork fallback) while updating
+  // them only in the background. Cached assets remain the offline fallback.
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      const networkFetch = fetch(event.request)
-        .then((res) => {
-          if (res && res.ok) {
-            const clone = res.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-          }
-          return res;
-        })
-        .catch(() => cached);
-      return cached || networkFetch;
-    })
+    fetch(event.request)
+      .then((res) => {
+        if (res && res.ok) {
+          const clone = res.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+        }
+        return res;
+      })
+      .catch(() => caches.match(event.request))
   );
 });
