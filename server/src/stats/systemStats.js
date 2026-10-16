@@ -92,7 +92,10 @@ class SystemStatsService {
 
     const netEntry = Array.isArray(netStats) ? netStats[0] : null;
 
-    const audio = this.mediaController ? this.mediaController.getAudioStatus() : { volume_percent: null, muted: null, mic_muted: null };
+    const emptyAudio = { volume_percent: null, muted: null, mic_muted: null };
+    const audio = this.mediaController
+      ? await safeCall(() => Promise.resolve(this.mediaController.getAudioStatus()), emptyAudio)
+      : emptyAudio;
 
     return {
       cpu: {

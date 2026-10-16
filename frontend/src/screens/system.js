@@ -49,10 +49,20 @@ export function mount(container, ctx) {
   const volSlider = el("input", { type: "range", min: "0", max: "100", value: "62", class: "slider" });
   const volLabel = el("span", { class: "mono" }, "62%");
   volSlider.addEventListener("change", () => provider.setVolume({ level: Number(volSlider.value) }));
+  const refreshSoundBtn = createChip({
+    id: "refresh-sound",
+    label: "Refresh Sound",
+    icon: "restart",
+    onClick: () => runCommand(
+      { type: COMMAND_TYPES.AUDIO_REFRESH },
+      { tileEl: refreshSoundBtn, successMessage: "Sound services refreshed." }
+    ),
+  });
   const audioPanel = el("div", { class: "panel panel-audio panel-pad" }, [
     el("h3", { class: "panel-title" }, "Audio"),
     el("div", { class: "settings-row" }, [el("span", { class: "label" }, "Mic"), micBtn]),
     el("div", { class: "settings-row" }, [el("span", { class: "label" }, "Master Volume"), volSlider, volLabel]),
+    refreshSoundBtn,
   ]);
 
   const taskMgrBtn = createChip({ id: "taskmgr", label: "Task Manager", icon: "monitor", onClick: () => runMaintenance("open-task-manager", taskMgrBtn, "Opened Task Manager.") });

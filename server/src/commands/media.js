@@ -106,6 +106,14 @@ class MediaController {
     return { muted: this.state.micMuted };
   }
 
+  async refreshAudio() {
+    if (!this.mockExec) {
+      throw new Error('Sound refresh is only supported on the Linux desktop.');
+    }
+    this.logger.info('mockExec: would restart the user audio services');
+    return { refreshed: true, ...this.getAudioStatus() };
+  }
+
   async mediaControl(action) {
     if (!this.mockExec) {
       this.logger.error('mediaControl: real Windows implementation not yet wired up (see README TODO)');
@@ -199,6 +207,23 @@ function youtubeArtwork(mediaUrl) {
   }
 }
 
+function identifyMediaApp(playerName, title, artist, mediaUrl, artworkUrl = '') {
+  const text = `${playerName || ''} ${title || ''} ${artist || ''} ${mediaUrl || ''} ${artworkUrl || ''}`.toLowerCase();
+  // URL/title information disambiguates browser-backed MPRIS sessions. Keep
+  // YouTube Music ahead of YouTube because its hostname contains "youtube".
+  if (/music\.youtube\.com|youtube music/.test(text)) return 'YouTube Music';
+  if (/netflix\.com|nflx(?:img|video)\.net|\bnetflix\b/.test(text)) return 'Netflix';
+  if (/spotify(?:\.com|:)|\bspotify\b/.test(text)) return 'Spotify';
+  if (/youtu\.be|youtube\.com|ytimg\.com|\byoutube\b/.test(text)) return 'YouTube';
+  if (/primevideo\.com|amazon\.[^\s/]+\/gp\/video|\bprime video\b/.test(text)) return 'Prime Video';
+  if (/disneyplus\.com|\bdisney\+/.test(text)) return 'Disney+';
+  if (/play\.max\.com|\bhbo max\b/.test(text)) return 'Max';
+  if (/hulu\.com|\bhulu\b/.test(text)) return 'Hulu';
+  if (/plex\.tv|\bplex\b/.test(text)) return 'Plex';
+  if (/chromium|chrome|firefox|brave|edge|browser/.test(text)) return 'Browser';
+  return playerName || 'Media';
+}
+
 /**
  * Real Linux (Omarchy/PipeWire) implementation, added when the tablet's
  * real target turned out to be this Omarchy machine, not a Windows PC —
@@ -235,6 +260,7 @@ class LinuxMediaController {
     this.nowPlaying = { ...EMPTY_NOW_PLAYING };
     this._onNowPlayingChange = null;
     this._trackIndex = 0; // only used in mockExec fallback mode, mirrors MediaController
+    this._audioStatusPromise = null;
 
     if (!this.mockExec) {
       this._pollTimer = setInterval(() => this._pollNowPlaying(), 1500);
@@ -254,9 +280,9 @@ class LinuxMediaController {
   async _resolveSink() {
     try {
       const out = (await run('omarchy-audio-output-sink', [])).trim();
-      return out || '@DEFAULT_AUDIO_SINK@';
+      return out || '@DEFAULT_SINK@';
     } catch (_) {
-      return '@DEFAULT_AUDIO_SINK@'; // omarchy-* not present — fall back to the wpctl/pactl default alias
+      return '@DEFAULT_SINK@'; // omarchy-* not present — fall back to pactl's default-sink alias
     }
   }
 
@@ -277,6 +303,32 @@ class LinuxMediaController {
     } catch (_) {
       return this.state.muted;
     }
+  }
+
+  async _readSourceMuted() {
+    try {
+      const out = await run('pactl', ['get-source-mute', '@DEFAULT_SOURCE@']);
+      return /yes/i.test(out);
+    } catch (_) {
+      return this.state.micMuted;
+    }
+  }
+
+  async _refreshAudioStatus() {
+    const sink = await this._resolveSink();
+    const [volumePercent, muted, micMuted] = await Promise.all([
+      this._readSinkVolume(sink),
+      this._readSinkMuted(sink),
+      this._readSourceMuted(),
+    ]);
+    this.state.volumePercent = volumePercent;
+    this.state.muted = muted;
+    this.state.micMuted = micMuted;
+    return {
+      volume_percent: volumePercent,
+      muted,
+      mic_muted: micMuted,
+    };
   }
 
   async setVolume({ level, mute }) {
@@ -322,6 +374,38 @@ class LinuxMediaController {
     return { muted: this.state.micMuted };
   }
 
+  async refreshAudio() {
+    if (this.mockExec) {
+      this.logger.info('mockExec: would refresh WirePlumber routing and restore the default sink');
+      return { refreshed: true, ...this.getAudioStatus() };
+    }
+
+    // Refresh the routing/session manager without restarting PipeWire itself.
+    // Restarting the audio server tears down existing application streams
+    // (Spotify may keep saying "Playing" while producing no audio), whereas
+    // WirePlumber can rediscover devices and reconnect streams in place.
+    await run('systemctl', ['--user', 'restart', 'wireplumber.service'], { timeout: 15000 });
+    await new Promise((resolve) => setTimeout(resolve, 750));
+
+    const sink = await this._resolveSink();
+    await run('pactl', ['set-default-sink', sink]);
+    await run('pactl', ['set-sink-mute', sink, '0']);
+
+    // If a controller/headset briefly became the default, move every current
+    // playback stream back to the restored desktop sink.
+    try {
+      const rows = await run('pactl', ['list', 'short', 'sink-inputs']);
+      const inputIds = rows.split(/\r?\n/).map((row) => row.trim().split(/\s+/)[0]).filter(Boolean);
+      await Promise.all(inputIds.map((id) => run('pactl', ['move-sink-input', id, sink])));
+    } catch (_) {
+      // Having no current playback streams is a valid state.
+    }
+
+    this._audioStatusPromise = null;
+    const status = await this.getAudioStatus();
+    return { refreshed: true, ...status };
+  }
+
   async mediaControl(action) {
     if (this.mockExec) {
       // Mirrors MediaController's mock behavior so the mock/live toggle
@@ -360,18 +444,38 @@ class LinuxMediaController {
   async _pollNowPlaying() {
     let next;
     try {
-      const status = (await run('playerctl', ['status'])).trim();
+      const playerNames = (await run('playerctl', ['--list-all']))
+        .split(/\r?\n/)
+        .map((name) => name.trim())
+        .filter(Boolean);
+      if (!playerNames.length) throw new Error('No media players found');
+
+      // playerctl's implicit/default player can remain an older paused app
+      // (commonly Spotify) while a browser session is actually playing.
+      // Query every session and explicitly prefer the active one.
+      const players = await Promise.all(playerNames.map(async (name) => {
+        try {
+          return { name, status: (await run('playerctl', ['--player', name, 'status'])).trim() };
+        } catch (_) {
+          return { name, status: '' };
+        }
+      }));
+      const selected = players.find((player) => player.status === 'Playing') ||
+        players.find((player) => player.status === 'Paused') || players[0];
+      const status = selected.status;
       const raw = await run('playerctl', [
+        '--player',
+        selected.name,
         'metadata',
         '--format',
         '{{playerName}}\x1f{{title}}\x1f{{artist}}\x1f{{mpris:length}}\x1f{{position}}\x1f{{mpris:artUrl}}\x1f{{xesam:url}}',
       ]);
-      const [app, title, artist, lengthUs, posUs, rawArtUrl, mediaUrl] = raw.trim().split('\x1f');
+      const [playerName, title, artist, lengthUs, posUs, rawArtUrl, mediaUrl] = raw.trim().split('\x1f');
       // Remote HTTPS artwork (Spotify, browser players, etc.) can be loaded
       // directly by the tablet. Do not expose file:// paths from the PC.
       const albumArtUrl = youtubeArtwork(mediaUrl) || await resolveArtwork(rawArtUrl);
       next = {
-        app: app || 'Media',
+        app: identifyMediaApp(playerName, title, artist, mediaUrl, rawArtUrl),
         title: title || '',
         artist: artist || '',
         is_playing: status === 'Playing',
@@ -400,12 +504,24 @@ class LinuxMediaController {
   }
 
   getAudioStatus() {
-    return {
-      volume_percent: this.state.volumePercent,
-      muted: this.state.muted,
-      mic_muted: this.state.micMuted,
-    };
+    if (this.mockExec) {
+      return {
+        volume_percent: this.state.volumePercent,
+        muted: this.state.muted,
+        mic_muted: this.state.micMuted,
+      };
+    }
+
+    // Audio can change outside Launchpad (desktop controls, media keys, or
+    // another app). Refresh from PipeWire/Pulse for each status snapshot
+    // instead of returning the last value written through this controller.
+    // Coalesce overlapping REST/WS snapshots so they share one command set.
+    if (!this._audioStatusPromise) {
+      this._audioStatusPromise = this._refreshAudioStatus()
+        .finally(() => { this._audioStatusPromise = null; });
+    }
+    return this._audioStatusPromise;
   }
 }
 
-module.exports = { MediaController, LinuxMediaController };
+module.exports = { MediaController, LinuxMediaController, identifyMediaApp };

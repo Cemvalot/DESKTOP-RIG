@@ -267,9 +267,9 @@ class WsHub {
    * pointer_input and the same reasoning for why: a run of typed characters
    * is a continuous stream of low-consequence-per-event actions, not a
    * discrete command needing a result per keystroke. `type` carries literal
-   * text (letters/digits/punctuation/space); `key` carries a symbolic name
-   * from the server's fixed allowlist (see desktop.js SPECIAL_KEYS) — never
-   * a raw keycode or arbitrary key combo from the client.
+   * text (letters/digits/punctuation/space); `key`, `shortcut`, and `window`
+   * carry symbolic names from fixed server-side allowlists — never a raw
+   * keycode, arbitrary key combo, shell command, or window selector.
    */
   _handleKeyboardInput(client, payload) {
     if (!this.desktopController) return;
@@ -287,6 +287,10 @@ class WsHub {
       this.desktopController.typeText(text).catch(report);
     } else if (action === 'key') {
       this.desktopController.pressKey(String(payload.key || '')).catch(report);
+    } else if (action === 'shortcut') {
+      this.desktopController.pressShortcut(String(payload.shortcut || '')).catch(report);
+    } else if (action === 'window') {
+      this.desktopController.windowAction(String(payload.windowAction || '')).catch(report);
     } else {
       client.ws.send(envelope('error', null, { code: 'BAD_MESSAGE', message: `Unknown keyboard_input action '${action}'` }));
     }

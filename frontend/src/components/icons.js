@@ -5,6 +5,7 @@
 // approximations drawn into the sprite.
 
 const APP_ICON_ASSETS = {
+  "nothing-playing": "./assets/apps/nothing-playing.svg",
   steam: "./assets/apps/steam.png",
   discord: "./assets/apps/discord.png",
   browser: "./assets/apps/browser.png",

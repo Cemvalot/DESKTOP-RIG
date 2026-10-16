@@ -51,6 +51,7 @@ function run(cmd, args, { timeout = 4000 } = {}) {
 }
 
 const YDOTOOL_CLICK_CODES = { left: '0xC0', right: '0xC1', middle: '0xC2' };
+const CTRL_KEY = 29;
 
 // Raw Linux input-event-codes.h keycodes (see /usr/include/linux/input-event-codes.h)
 // for the non-printable keys the virtual keyboard exposes. Printable
@@ -69,6 +70,45 @@ const SPECIAL_KEYS = {
   ArrowRight: 106,
 };
 
+// Fixed, named shortcuts exposed by the tablet. The client never sends raw
+// keycodes or an arbitrary modifier sequence; it can only select one of these
+// allowlisted combinations.
+const SHORTCUTS = {
+  'Ctrl+A': [CTRL_KEY, 30],
+  'Ctrl+B': [CTRL_KEY, 48],
+  'Ctrl+C': [CTRL_KEY, 46],
+  'Ctrl+D': [CTRL_KEY, 32],
+  'Ctrl+E': [CTRL_KEY, 18],
+  'Ctrl+F': [CTRL_KEY, 33],
+  'Ctrl+G': [CTRL_KEY, 34],
+  'Ctrl+H': [CTRL_KEY, 35],
+  'Ctrl+I': [CTRL_KEY, 23],
+  'Ctrl+J': [CTRL_KEY, 36],
+  'Ctrl+K': [CTRL_KEY, 37],
+  'Ctrl+L': [CTRL_KEY, 38],
+  'Ctrl+M': [CTRL_KEY, 50],
+  'Ctrl+N': [CTRL_KEY, 49],
+  'Ctrl+O': [CTRL_KEY, 24],
+  'Ctrl+P': [CTRL_KEY, 25],
+  'Ctrl+Q': [CTRL_KEY, 16],
+  'Ctrl+R': [CTRL_KEY, 19],
+  'Ctrl+S': [CTRL_KEY, 31],
+  'Ctrl+T': [CTRL_KEY, 20],
+  'Ctrl+U': [CTRL_KEY, 22],
+  'Ctrl+V': [CTRL_KEY, 47],
+  'Ctrl+W': [CTRL_KEY, 17],
+  'Ctrl+X': [CTRL_KEY, 45],
+  'Ctrl+Y': [CTRL_KEY, 21],
+  'Ctrl+Z': [CTRL_KEY, 44],
+};
+
+const WINDOW_ACTIONS = {
+  close: ['dispatch', 'hl.dsp.window.close()'],
+  fullscreen: ['dispatch', 'hl.dsp.window.fullscreen({ action = "toggle", mode = "fullscreen" })'],
+  screen1: ['dispatch', 'hl.dsp.focus({ monitor = 0 })'],
+  screen2: ['dispatch', 'hl.dsp.focus({ monitor = 1 })'],
+};
+
 class DesktopController {
   constructor({ mockExec, logger, moveSensitivity = 1.5 }) {
     this.mockExec = mockExec;
@@ -80,6 +120,18 @@ class DesktopController {
     // than something baked into the frontend, so it can be adjusted
     // without a frontend redeploy.
     this.moveSensitivity = moveSensitivity;
+    // A tap creates one WS message. Without serialization, a quick run of
+    // taps starts several ydotool processes at once and their events race,
+    // producing missing or reordered characters. Keep one keyboard stream.
+    this.keyboardQueue = Promise.resolve();
+  }
+
+  _enqueueKeyboard(operation) {
+    const next = this.keyboardQueue.then(operation, operation);
+    // Keep the internal chain recoverable after a rejected command while
+    // returning the real result/error to the caller.
+    this.keyboardQueue = next.catch(() => {});
+    return next;
   }
 
   async moveCursor({ dx, dy }) {
@@ -136,40 +188,93 @@ class DesktopController {
   /** Types literal text (letters/digits/punctuation/space) from the virtual keyboard. */
   async typeText(text) {
     if (typeof text !== 'string' || !text) return { ok: true };
-    if (this.mockExec) {
-      await sleep(simulatedDelayMs());
-      this.logger.info('mockExec: type', { length: text.length });
-      return { ok: true };
-    }
-    if (process.platform !== 'linux') {
-      throw new Error('Virtual keyboard is only implemented for this Linux (Omarchy) build.');
-    }
-    try {
-      await run('ydotool', ['type', '--', text]);
-      return { ok: true };
-    } catch (err) {
-      throw ydotoolError(err);
-    }
+    return this._enqueueKeyboard(async () => {
+      if (this.mockExec) {
+        await sleep(simulatedDelayMs());
+        this.logger.info('mockExec: type', { length: text.length });
+        return { ok: true };
+      }
+      if (process.platform !== 'linux') {
+        throw new Error('Virtual keyboard is only implemented for this Linux (Omarchy) build.');
+      }
+      try {
+        await run('ydotool', ['type', '--key-delay=4', '--key-hold=8', '--', text]);
+        return { ok: true };
+      } catch (err) {
+        throw ydotoolError(err);
+      }
+    });
   }
 
   /** Presses one named non-printable key from the fixed SPECIAL_KEYS allowlist. */
   async pressKey(key) {
-    if (this.mockExec) {
-      await sleep(simulatedDelayMs());
-      this.logger.info('mockExec: key press', { key });
-      return { ok: true };
-    }
     const code = SPECIAL_KEYS[key];
     if (!code) throw new Error(`Unknown key: ${key}`);
-    if (process.platform !== 'linux') {
-      throw new Error('Virtual keyboard is only implemented for this Linux (Omarchy) build.');
-    }
-    try {
-      await run('ydotool', ['key', `${code}:1`, `${code}:0`]);
-      return { ok: true };
-    } catch (err) {
-      throw ydotoolError(err);
-    }
+    return this._enqueueKeyboard(async () => {
+      if (this.mockExec) {
+        await sleep(simulatedDelayMs());
+        this.logger.info('mockExec: key press', { key });
+        return { ok: true };
+      }
+      if (process.platform !== 'linux') {
+        throw new Error('Virtual keyboard is only implemented for this Linux (Omarchy) build.');
+      }
+      try {
+        await run('ydotool', ['key', `${code}:1`, `${code}:0`]);
+        return { ok: true };
+      } catch (err) {
+        throw ydotoolError(err);
+      }
+    });
+  }
+
+  /** Presses one fixed Ctrl shortcut without accepting arbitrary keycodes. */
+  async pressShortcut(shortcut) {
+    const codes = SHORTCUTS[shortcut];
+    if (!codes) throw new Error(`Unknown shortcut: ${shortcut}`);
+    return this._enqueueKeyboard(async () => {
+      if (this.mockExec) {
+        await sleep(simulatedDelayMs());
+        this.logger.info('mockExec: shortcut', { shortcut });
+        return { ok: true };
+      }
+      if (process.platform !== 'linux') {
+        throw new Error('Keyboard shortcuts are only implemented for this Linux (Omarchy) build.');
+      }
+      const [modifier, key] = codes;
+      try {
+        await run('ydotool', ['key', `${modifier}:1`, `${key}:1`, `${key}:0`, `${modifier}:0`]);
+        return { ok: true };
+      } catch (err) {
+        throw ydotoolError(err);
+      }
+    });
+  }
+
+  /** Close or fullscreen the currently focused Hyprland window. */
+  async windowAction(action) {
+    const args = WINDOW_ACTIONS[action];
+    if (!args) throw new Error(`Unknown window action: ${action}`);
+    return this._enqueueKeyboard(async () => {
+      if (this.mockExec) {
+        await sleep(simulatedDelayMs());
+        this.logger.info('mockExec: window action', { action });
+        return { ok: true };
+      }
+      if (process.platform !== 'linux') {
+        throw new Error('Window controls are only implemented for this Linux (Hyprland) build.');
+      }
+      try {
+        const output = String(await run('hyprctl', args)).trim();
+        // Hyprland 0.56's Lua dispatcher can report a parse/runtime error in
+        // stdout while still returning exit code 0. Treat anything other than
+        // its documented success response as a real error for the tablet UI.
+        if (output !== 'ok') throw new Error(output || `Window action '${action}' failed.`);
+        return { ok: true };
+      } catch (err) {
+        throw new Error(err.message || `Window action '${action}' failed.`);
+      }
+    });
   }
 }
 

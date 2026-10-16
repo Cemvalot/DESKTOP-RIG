@@ -138,6 +138,19 @@ function resolveCommand(body, config) {
       };
     }
 
+    case 'audio_refresh': {
+      return {
+        type: 'audio_refresh',
+        targetId: 'pipewire-stack',
+        dangerous: false,
+        summary: 'Refresh sound services',
+        run: async (ctx) => {
+          const r = await ctx.mediaController.refreshAudio();
+          return { ok: true, code: 0, stdout: JSON.stringify(r), stderr: '', mocked: ctx.mediaController.mockExec };
+        },
+      };
+    }
+
     case 'power_action': {
       if (!POWER_ACTIONS.has(body.action)) {
         throw rejectionError(400, 'INVALID_POWER_ACTION', `action must be one of ${[...POWER_ACTIONS].join(', ')}`);

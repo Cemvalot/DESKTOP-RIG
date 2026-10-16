@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">Nothing playing</title>
+  <desc id="desc">A neutral media placeholder with a play symbol.</desc>
+  <defs>
+    <linearGradient id="bg" x1="32" y1="24" x2="224" y2="232" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#303747"/>
+      <stop offset="1" stop-color="#171b24"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="240" height="240" rx="44" fill="url(#bg)"/>
+  <circle cx="128" cy="104" r="46" fill="none" stroke="#9ba6ba" stroke-width="8" opacity=".9"/>
+  <path d="m116 80 34 24-34 24z" fill="#c6cedb"/>
+  <text x="128" y="184" fill="#c6cedb" font-family="system-ui, sans-serif" font-size="20" font-weight="600" text-anchor="middle">Nothing playing</text>
+</svg>

@@ -22,7 +22,7 @@ export function mount(container, ctx) {
   // Now Playing
   const npTitle = el("p", { class: "title" }, "Nothing playing");
   const npArtist = el("p", { class: "artist" }, "—");
-  const albumArt = el("div", { class: "album-thumb", html: iconMarkup("spotify") });
+  const albumArt = el("div", { class: "album-thumb", html: iconMarkup("nothing-playing") });
   const playBtn = createIconButton({ id: "np-play", icon: "play", extraClass: "play", onClick: () => toggleMedia() });
   const prevBtn = createIconButton({ id: "np-prev", icon: "prev-track", onClick: () => provider.mediaControl("previous") });
   const nextBtn = createIconButton({ id: "np-next", icon: "next-track", onClick: () => provider.mediaControl("next") });
@@ -99,21 +99,33 @@ export function mount(container, ctx) {
     if (!np) return;
     npTitle.textContent = np.title || "Nothing playing";
     npArtist.textContent = np.artist || "—";
-    renderAlbumArt(albumArt, np.album_art_url);
+    renderAlbumArt(albumArt, np);
     playing = !!np.is_playing;
     playBtn.querySelector("use").setAttribute("href", `#icon-${playing ? "pause" : "play"}`);
   }
 
-  function renderAlbumArt(container, url) {
+  function fallbackIcon(np) {
+    const appName = String(np?.app || "").toLowerCase();
+    if (!appName && !np?.title && !np?.artist) return "nothing-playing";
+    if (appName.includes("netflix")) return "netflix";
+    if (appName.includes("spotify")) return "spotify";
+    if (appName.includes("youtube")) return "youtube";
+    if (/chromium|chrome|firefox|brave|edge|browser/.test(appName)) return "browser";
+    return "video";
+  }
+
+  function renderAlbumArt(container, np) {
+    const url = np?.album_art_url;
+    const fallback = fallbackIcon(np);
     container.innerHTML = "";
     if (!url) {
-      container.innerHTML = iconMarkup("spotify");
+      container.innerHTML = iconMarkup(fallback);
       return;
     }
     const isVideo = /\.(?:mp4|webm|ogg)(?:$|[?#])/i.test(url);
     const art = isVideo ? el("video", { src: url, autoplay: true, muted: true, loop: true, playsinline: true, "aria-label": "Album artwork" }) : el("img", { src: url, alt: "Album artwork" });
     art.addEventListener("error", () => {
-      container.innerHTML = iconMarkup("spotify");
+      if (container.contains(art)) container.innerHTML = iconMarkup(fallback);
     }, { once: true });
     container.appendChild(art);
   }

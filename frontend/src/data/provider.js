@@ -101,7 +101,7 @@
 //   dx/dy touch deltas; 'click' takes button: 'left'|'right'|'middle';
 //   'scroll' takes dy. Never sends anything if the WS isn't connected.
 //
-// sendKeyboardInput({ action: 'type'|'key', text?, key? }): void
+// sendKeyboardInput({ action: 'type'|'key'|'shortcut'|'window', text?, key?, shortcut?, windowAction? }): void
 //   Fire-and-forget, same shape as sendPointerInput. 'type' sends literal
 //   text (letters/digits/punctuation/space) the server types via the OS
 //   input layer; 'key' sends a symbolic non-printable key name (e.g.
@@ -155,6 +155,7 @@ export const COMMAND_TYPES = Object.freeze({
   MEDIA_CONTROL: "media_control",
   VOLUME_SET: "volume_set",
   MIC_MUTE: "mic_mute",
+  AUDIO_REFRESH: "audio_refresh",
   POWER_ACTION: "power_action",
   MAINTENANCE: "maintenance",
 });

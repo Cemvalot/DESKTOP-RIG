@@ -36,11 +36,23 @@ const ROW4 = [["z"], ["x"], ["c"], ["v"], ["b"], ["n"], ["m"], [",", "<"], [".",
 export function mount(container, ctx) {
   const { provider } = ctx;
   let shiftOn = false;
+  let ctrlOn = false;
   const charButtons = []; // { btn, lower, upper }
+
+  function setCtrl(on) {
+    ctrlOn = on;
+    ctrlBtn.classList.toggle("active", ctrlOn);
+    ctrlBtn.setAttribute("aria-pressed", String(ctrlOn));
+  }
 
   function sendChar(ch) {
     hapticPress();
-    provider.sendKeyboardInput({ action: "type", text: ch });
+    if (ctrlOn && /^[a-z]$/i.test(ch)) {
+      provider.sendKeyboardInput({ action: "shortcut", shortcut: `Ctrl+${ch.toUpperCase()}` });
+      setCtrl(false);
+    } else {
+      provider.sendKeyboardInput({ action: "type", text: ch });
+    }
   }
   function sendKey(keyName) {
     hapticPress();
@@ -52,6 +64,12 @@ export function mount(container, ctx) {
     charButtons.push({ btn, lower, upper });
     return btn;
   }
+
+  const ctrlBtn = el("button", {
+    class: "vk-key vk-special vk-wide press-scale",
+    "aria-pressed": "false",
+    onclick: () => setCtrl(!ctrlOn),
+  }, "Ctrl");
 
   const shiftBtn = el("button", { class: "vk-key vk-special vk-wide press-scale", "aria-pressed": "false" }, "Shift");
   shiftBtn.addEventListener("click", () => {
@@ -70,13 +88,69 @@ export function mount(container, ctx) {
     return btn;
   }
 
+  function shortcutKey(label, shortcut) {
+    const btn = el("button", { class: "vk-key vk-special vk-utility press-scale" }, label);
+    btn.addEventListener("click", () => {
+      hapticPress();
+      provider.sendKeyboardInput({ action: "shortcut", shortcut });
+      setCtrl(false);
+    });
+    return btn;
+  }
+
+  function windowKey(label, windowAction, extraClass = "") {
+    const btn = el("button", { class: `vk-key vk-window press-scale ${extraClass}` }, label);
+    btn.addEventListener("click", () => {
+      hapticPress();
+      provider.sendKeyboardInput({ action: "window", windowAction });
+    });
+    return btn;
+  }
+
+  const screenButtons = [];
+  function screenKey(label, windowAction, selected = false) {
+    const btn = el("button", {
+      class: `vk-key vk-screen press-scale${selected ? " active" : ""}`,
+      "aria-pressed": String(selected),
+    }, label);
+    btn.addEventListener("click", () => {
+      hapticPress();
+      for (const item of screenButtons) {
+        const active = item.btn === btn;
+        item.btn.classList.toggle("active", active);
+        item.btn.setAttribute("aria-pressed", String(active));
+      }
+      provider.sendKeyboardInput({ action: "window", windowAction });
+    });
+    screenButtons.push({ btn, windowAction });
+    return btn;
+  }
+
+  const screenRow = el("div", { class: "vk-row vk-screen-row", role: "group", "aria-label": "Target screen" }, [
+    screenKey("Screen 1", "screen1", true),
+    screenKey("Screen 2", "screen2"),
+  ]);
+
+  const utilityRow = el("div", { class: "vk-row vk-toolbar" }, [
+    windowKey("Close App", "close", "vk-danger"),
+    windowKey("Fullscreen", "fullscreen"),
+    shortcutKey("Select All", "Ctrl+A"),
+    shortcutKey("Copy", "Ctrl+C"),
+    shortcutKey("Paste", "Ctrl+V"),
+    shortcutKey("Cut", "Ctrl+X"),
+    shortcutKey("Undo", "Ctrl+Z"),
+    shortcutKey("Redo", "Ctrl+Y"),
+  ]);
+
   const row1 = el("div", { class: "vk-row" }, [...ROW1.map(([lo, up]) => charKey(lo, up)), namedKey("⌫", "Backspace", "vk-wide")]);
   const row2 = el("div", { class: "vk-row" }, [namedKey("Tab", "Tab", "vk-wide"), ...ROW2.map((c) => charKey(c))]);
   const row3 = el("div", { class: "vk-row" }, [...ROW3.map((c) => charKey(c)), namedKey("Enter", "Enter", "vk-wide")]);
   const row4 = el("div", { class: "vk-row" }, [shiftBtn, ...ROW4.map(([lo, up]) => charKey(lo, up))]);
   const row5 = el("div", { class: "vk-row" }, [
     namedKey("Esc", "Escape"),
+    ctrlBtn,
     spaceBtn,
+    namedKey("Del", "Delete"),
     namedKey("←", "ArrowLeft"),
     namedKey("↑", "ArrowUp"),
     namedKey("↓", "ArrowDown"),
@@ -85,7 +159,7 @@ export function mount(container, ctx) {
 
   const keyboardPanel = el("div", { class: "panel panel-pad keyboard-panel" }, [
     el("h3", { class: "panel-title" }, "Virtual Keyboard"),
-    el("div", { class: "vk-rows" }, [row1, row2, row3, row4, row5]),
+    el("div", { class: "vk-rows" }, [screenRow, utilityRow, row1, row2, row3, row4, row5]),
   ]);
 
   // ── Small trackpad ────────────────────────────────────────────────────

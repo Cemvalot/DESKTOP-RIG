@@ -149,6 +149,26 @@
 .vk-key.vk-special.active { background: var(--accent-dim-bg); border-color: var(--accent-border); color: var(--accent); }
 .vk-key.vk-wide { flex: 1.7; }
 .vk-key.vk-space { flex: 7; }
+.vk-screen-row { justify-content: center; gap: var(--space-3); }
+.vk-key.vk-screen {
+  flex: none; width: 176px; height: 48px; background: rgba(18, 93, 124, 0.22);
+  border-color: rgba(77, 198, 242, 0.24); color: var(--text-secondary);
+}
+.vk-key.vk-screen.active {
+  background: rgba(41, 211, 232, 0.18); border-color: var(--accent-border);
+  color: var(--accent); box-shadow: inset 0 -3px 0 var(--accent);
+}
+.vk-toolbar { margin-bottom: var(--space-1); }
+.vk-toolbar .vk-key { height: 48px; white-space: nowrap; }
+.vk-key.vk-utility { background: rgba(75, 95, 153, 0.30); }
+.vk-key.vk-window {
+  background: rgba(27, 134, 160, 0.22); border-color: rgba(77, 198, 242, 0.32);
+  color: var(--text-primary); font: var(--type-caption); flex: 1.25;
+}
+.vk-key.vk-window.vk-danger {
+  background: rgba(191, 52, 86, 0.22); border-color: rgba(255, 91, 130, 0.32);
+  color: #ffb5c7;
+}
 
 .trackpad-panel {
   grid-area: trackpad;
@@ -197,6 +217,7 @@
 .quick-actions-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); }
 .maintenance-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); align-content: start; }
 .quick-actions-row .chip, .maintenance-row .chip { width: 100%; min-width: 0; }
+.panel-audio > .chip { width: 100%; min-width: 0; margin-top: var(--space-2); }
 
 .power-cluster.compact { justify-content: flex-start; }
 .power-cluster.compact .power-row { gap: var(--space-3); }

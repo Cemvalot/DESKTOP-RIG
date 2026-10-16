@@ -17,7 +17,7 @@ import { showToast } from "../components/toast.js";
 export function mount(container, ctx) {
   const { provider } = ctx;
 
-  const albumArt = el("div", { class: "media-album-art", html: iconMarkup("spotify") });
+  const albumArt = el("div", { class: "media-album-art", html: iconMarkup("nothing-playing") });
   const titleEl = el("h2", { class: "track-title" }, "Nothing playing");
   const artistEl = el("p", { class: "track-artist" }, "—");
   const posT = el("span", { class: "t" }, "0:00");
@@ -74,27 +74,41 @@ export function mount(container, ctx) {
     if (!np) return;
     titleEl.textContent = np.title || "Nothing playing";
     artistEl.textContent = np.artist || "—";
-    renderAlbumArt(np.album_art_url);
+    renderAlbumArt(np);
     renderProgress(np);
     playBtn.querySelector("use").setAttribute("href", `#icon-${np.is_playing ? "pause" : "play"}`);
     const appName = String(np.app || "").toLowerCase();
-    const isSpotify = appName === "spotify";
+    const isSpotify = appName.includes("spotify");
     const isYoutube = appName.includes("youtube") || appName.includes("chromium") || appName.includes("chrome") || appName.includes("browser");
     spotifyChip.classList.toggle("active", isSpotify);
-    browserChip.classList.toggle("active", !isSpotify);
-    browserChip.querySelector("span").textContent = isYoutube ? "YouTube" : "Browser Media";
+    browserChip.classList.toggle("active", !!appName && !isSpotify);
+    browserChip.querySelector("span").textContent = appName.includes("netflix") ? "Netflix" : isYoutube ? (appName.includes("music") ? "YouTube Music" : "YouTube") : (np.app || "Browser Media");
   }
 
-  function renderAlbumArt(url) {
+  function fallbackIcon(np) {
+    const appName = String(np?.app || "").toLowerCase();
+    if (!appName && !np?.title && !np?.artist) return "nothing-playing";
+    if (appName.includes("netflix")) return "netflix";
+    if (appName.includes("spotify")) return "spotify";
+    if (appName.includes("youtube")) return "youtube";
+    if (/chromium|chrome|firefox|brave|edge|browser/.test(appName)) return "browser";
+    return "video";
+  }
+
+  function renderAlbumArt(np) {
+    const url = np?.album_art_url;
+    const fallback = fallbackIcon(np);
     albumArt.innerHTML = "";
     if (!url) {
-      albumArt.innerHTML = iconMarkup("spotify");
+      albumArt.innerHTML = iconMarkup(fallback);
       return;
     }
     const isVideo = /\.(?:mp4|webm|ogg)(?:$|[?#])/i.test(url);
     const art = isVideo ? el("video", { src: url, autoplay: true, muted: true, loop: true, playsinline: true, "aria-label": "Album artwork" }) : el("img", { src: url, alt: "Album artwork" });
     art.addEventListener("error", () => {
-      albumArt.innerHTML = iconMarkup("spotify");
+      // Ignore failures from artwork that a newer now-playing update has
+      // already replaced; otherwise stale media can overwrite the new app.
+      if (albumArt.contains(art)) albumArt.innerHTML = iconMarkup(fallback);
     }, { once: true });
     albumArt.appendChild(art);
   }

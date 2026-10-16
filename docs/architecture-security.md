@@ -815,7 +815,8 @@ feature.
   - `click`: `button: 'left'|'right'|'middle'`.
   - `scroll`: `dy` (currently a documented TODO on the real backend — see server README —
     but always resolves successfully in mockExec mode so the full gesture flow is testable).
-- `keyboard_input` (client→server): `{ action: 'type'|'key', text?, key? }`.
+- `keyboard_input` (client→server):
+  `{ action: 'type'|'key'|'shortcut'|'window', text?, key?, shortcut?, windowAction? }`.
   - `type`: literal text (letters/digits/punctuation/space, capped at 500 chars per message)
     from the on-screen keyboard, sent verbatim to `ydotool type` — the server never
     interprets it, it just types it. `ydotool type` resolves the actual keystrokes (including
@@ -826,6 +827,13 @@ feature.
     `'ArrowUp'/'ArrowDown'/'ArrowLeft'/'ArrowRight'`) looked up against a fixed server-side
     allowlist (`SPECIAL_KEYS` in `server/src/commands/desktop.js`) mapping to raw Linux
     keycodes — the tablet never supplies a keycode or an arbitrary key combination.
+  - `shortcut`: one named Ctrl chord from the fixed server-side `Ctrl+A` through `Ctrl+Z`
+    allowlist. Modifier down/up events and the selected key's raw code are built exclusively
+    on the server.
+  - `window`: `close`, `fullscreen`, `screen1`, or `screen2`; the server maps these exact
+    names to fixed Hyprland 0.56 Lua dispatcher expressions. The screen actions focus monitor
+    IDs 0/1 before subsequent keyboard or window actions. No selector, process id, executable,
+    monitor name, or raw Hyprland command comes from the tablet.
   - Both message types are fire-and-forget, matching `status_update`'s own precedent — no
     per-event `command_result`-style resolution (far too chatty for a drag gesture or a typed
     sentence). A failure (e.g. the input-injection tool isn't installed) is surfaced via a WS
