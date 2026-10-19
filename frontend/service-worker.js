@@ -5,7 +5,7 @@
 // after a network blip. Never caches live data — /api/* and the WS
 // upgrade are always passed straight to the network.
 
-const CACHE_NAME = "launchpad-shell-v32";
+const CACHE_NAME = "launchpad-shell-v34";
 
 const SHELL_FILES = [
   "./",
@@ -23,6 +23,10 @@ const SHELL_FILES = [
   "./assets/apps/codex.png",
   "./assets/apps/claude.ico",
   "./assets/apps/chatgpt.png",
+  "./assets/apps/counter-strike-2.jpg",
+  "./assets/apps/path-of-exile-2.jpg",
+  "./assets/apps/citizen-sleeper.jpg",
+  "./assets/apps/skate.jpg",
   "./src/app.js",
   "./src/styles/tokens.css",
   "./src/styles/base.css",

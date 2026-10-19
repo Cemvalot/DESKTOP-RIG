@@ -47,6 +47,40 @@ function runToCompletion(exePath, args = [], { timeout = 10_000 } = {}) {
   });
 }
 
+async function toggleMangoHudHotkey(gameWindow, { timeout = 3_000 } = {}) {
+  // MangoHud's control socket doesn't complete its protocol handshake for
+  // this Proton renderer, and Hyprland's synthetic shortcut dispatcher does
+  // not reliably reach this XWayland game. F12 through ydotool does work, but
+  // only when the game owns focus. Briefly focus it, inject exactly one
+  // press/release pair (X keycode 88 = F12), and restore the prior window.
+  let previousPid;
+  try {
+    const active = JSON.parse(await runToCompletion('hyprctl', ['activewindow', '-j'], { timeout }));
+    previousPid = Number(active.pid) || null;
+  } catch {
+    // Continue without a restore target if no window was active.
+  }
+
+  const targetSelector = `class:(^${gameWindow.class}$)`;
+  const focus = (selector) => {
+    const lua = `hl.dsp.focus({ window = '${selector}' })`;
+    return runToCompletion('hyprctl', ['dispatch', lua], { timeout });
+  };
+
+  try {
+    await focus(targetSelector);
+    const focused = JSON.parse(await runToCompletion('hyprctl', ['activewindow', '-j'], { timeout }));
+    if (Number(focused.pid) !== Number(gameWindow.pid)) {
+      throw new Error(`Hyprland focused PID ${focused.pid || 'none'}, expected game PID ${gameWindow.pid}`);
+    }
+    await runToCompletion('ydotool', ['key', '--key-delay=40', '88:1', '88:0'], { timeout });
+  } finally {
+    if (previousPid && previousPid !== Number(gameWindow.pid)) {
+      await focus(`pid:${previousPid}`);
+    }
+  }
+}
+
 class Executor {
   constructor({ mockExec, logger }) {
     this.mockExec = mockExec;
@@ -277,11 +311,49 @@ class Executor {
         label: 'Performance Overlay',
         real: async () => {
           if (isLinux) {
-            // TODO(real-linux): no overlay tool (e.g. MangoHud) is
-            // installed on this machine to drive — install it and wire a
-            // real toggle (MangoHud reads a runtime toggle key by default,
-            // or can be driven via its config file) as a follow-up.
-            throw new Error('toggle_perf_overlay: no overlay tool (e.g. MangoHud) installed — see README TODO');
+            // Games in the Gaming tab are configured with Steam's official
+            // `mangohud %command%` launch option. The HUD starts visible; this
+            // control command targets the visible Steam game window and sends
+            // MangoHud's configured F12 toggle while that game is focused.
+            const mangoHudPids = new Set();
+            for (const entry of await fs.promises.readdir('/proc', { withFileTypes: true })) {
+              if (!entry.isDirectory() || !/^\d+$/.test(entry.name)) continue;
+              try {
+                const maps = await fs.promises.readFile(`/proc/${entry.name}/maps`, 'utf8');
+                if (maps.includes('libMangoHud')) {
+                  mangoHudPids.add(Number(entry.name));
+                }
+              } catch {
+                // Processes can exit (or deny access) while /proc is scanned.
+              }
+            }
+            if (mangoHudPids.size === 0) {
+              throw new Error('No MangoHud-enabled game is running. Launch or restart a game first.');
+            }
+
+            let clients;
+            try {
+              clients = JSON.parse(await runToCompletion('hyprctl', ['clients', '-j']));
+            } catch (error) {
+              throw new Error(`Could not identify the active game window: ${error.message}`);
+            }
+            const gameWindow = clients
+              .filter((client) =>
+                mangoHudPids.has(Number(client.pid)) &&
+                /^steam_app_\d+$/.test(client.class || '') &&
+                client.mapped !== false
+              )
+              .sort((a, b) => (a.focusHistoryID ?? Number.MAX_SAFE_INTEGER) - (b.focusHistoryID ?? Number.MAX_SAFE_INTEGER))[0];
+            if (!gameWindow) {
+              throw new Error('No visible MangoHud-enabled Steam game was found.');
+            }
+
+            try {
+              await toggleMangoHudHotkey(gameWindow);
+            } catch (error) {
+              throw new Error(`Could not control MangoHud for ${gameWindow.title || gameWindow.class}: ${error.message}`);
+            }
+            return;
           }
           // TODO(real-windows): toggle a specific overlay (e.g. Xbox Game
           // Bar's FPS overlay via its own hotkey simulation, or a

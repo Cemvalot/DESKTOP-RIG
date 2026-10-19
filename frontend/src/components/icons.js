@@ -16,6 +16,10 @@ const APP_ICON_ASSETS = {
   codex: "./assets/apps/codex.png",
   claude: "./assets/apps/claude.ico",
   chatgpt: "./assets/apps/chatgpt.png",
+  "counter-strike-2": "./assets/apps/counter-strike-2.jpg",
+  "path-of-exile-2": "./assets/apps/path-of-exile-2.jpg",
+  "citizen-sleeper": "./assets/apps/citizen-sleeper.jpg",
+  skate: "./assets/apps/skate.jpg",
 };
 
 const SYMBOLS = {

@@ -57,7 +57,11 @@ export function mount(container, ctx) {
   container.appendChild(el("div", { class: "screen-inner" }, [quickPanel, gamemodePanel, toolsPanel, recentPanel, favPanel]));
 
   let recording = false;
-  let perfOn = false;
+  // MangoHud is configured to be visible when a supported Steam game starts.
+  // The button therefore represents the default enabled state; the first tap
+  // while a game is running hides it, and the next tap shows it again.
+  let perfOn = true;
+  perfBtn.classList.add("primary");
   let gameModeOn = false;
 
   function runMaintenance(taskId, tileEl, successMessage, dangerous = false) {
@@ -128,7 +132,7 @@ export function mount(container, ctx) {
     recentRow.innerHTML = "";
     for (const id of recentOrder.slice(0, 4)) {
       const g = byId[id];
-      const tile = createTile({ id: g.id, label: g.label, icon: "grid", size: "sm", onClick: () => launchGame(g, tile) });
+      const tile = createTile({ id: g.id, label: g.label, icon: g.icon || "grid", size: "sm", onClick: () => launchGame(g, tile) });
       recentRow.appendChild(tile);
     }
 
@@ -136,7 +140,7 @@ export function mount(container, ctx) {
     for (const id of games.favorites || []) {
       const g = byId[id];
       if (!g) continue;
-      const tile = createTile({ id: g.id, label: g.label, icon: "grid", favorite: true, onClick: () => launchGame(g, tile) });
+      const tile = createTile({ id: g.id, label: g.label, icon: g.icon || "grid", favorite: true, onClick: () => launchGame(g, tile) });
       favRow.appendChild(tile);
     }
     makeGridEditable(favRow, { profileId: getActiveProfileId(profile.id), screenKey: "gamingFavorites" });

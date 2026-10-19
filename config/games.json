@@ -1,11 +1,11 @@
 {
-  "note": "Static config seed for the Gaming screen's library/recent/favorites rails. A future module can replace this with a live Steam library scan; the frontend data-provider interface is the same either way.",
+  "note": "Gaming screen library seeded from this PC's Steam play history.",
   "library": [
-    { "id": "game-a", "label": "Game A", "icon": null, "launch": { "type": "url", "target": "steam://rungameid/000000" } },
-    { "id": "game-b", "label": "Game B", "icon": null, "launch": { "type": "url", "target": "steam://rungameid/000001" } },
-    { "id": "game-c", "label": "Game C", "icon": null, "launch": { "type": "url", "target": "steam://rungameid/000002" } },
-    { "id": "game-d", "label": "Game D", "icon": null, "launch": { "type": "url", "target": "steam://rungameid/000003" } }
+    { "id": "counter-strike-2", "label": "Counter-Strike 2", "icon": "counter-strike-2", "launch": { "type": "url", "target": "steam://rungameid/730" } },
+    { "id": "path-of-exile-2", "label": "Path of Exile 2", "icon": "path-of-exile-2", "launch": { "type": "url", "target": "steam://rungameid/2694490" } },
+    { "id": "skate", "label": "skate.", "icon": "skate", "launch": { "type": "url", "target": "steam://rungameid/3354750" } },
+    { "id": "citizen-sleeper", "label": "Citizen Sleeper", "icon": "citizen-sleeper", "launch": { "type": "url", "target": "steam://rungameid/1578650" } }
   ],
-  "recentlyPlayed": ["game-a", "game-b", "game-c", "game-d"],
-  "favorites": ["game-a", "game-c"]
+  "recentlyPlayed": ["counter-strike-2", "path-of-exile-2", "citizen-sleeper", "skate"],
+  "favorites": ["path-of-exile-2", "counter-strike-2"]
 }
